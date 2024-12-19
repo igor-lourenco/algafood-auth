@@ -8,6 +8,7 @@ import org.springframework.security.oauth2.config.annotation.configurers.ClientD
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
+import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
 
 /**  Essa classe é responsável por configurar o servidor de autorização OAuth2, de como os clientes se autenticam e
   obtêm tokens de acesso.  */
@@ -52,5 +53,16 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 
         endpoints.authenticationManager(authenticationManager);
 
+    }
+
+
+/** Este método configura as políticas de segurança para o servidor de autorização, especificamente para os endpoints que o servidor expõe. */
+    @Override
+    public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
+
+//      Define que apenas clientes autenticados podem acessar o endpoint que verifica a validade dos tokens. '/oauth/check_token'
+        security.checkTokenAccess("isAuthenticated()");
+
+//      security.checkTokenAccess("permitAll()"); // Define que qualquer um pode acessar o endpoint que verifica a validade dos tokens
     }
 }
