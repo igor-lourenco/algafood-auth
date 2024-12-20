@@ -3,6 +3,7 @@ package com.algaworks.algafood.auth;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
@@ -20,6 +21,8 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
     private PasswordEncoder passwordEncoder;
     @Autowired
     private AuthenticationManager authenticationManager;
+    @Autowired
+    private UserDetailsService userDetailsService;
 
 
     @Override //  Configurar os detalhes dos clientes OAuth2. (nesse caso o cliente Web, App, etc...)
@@ -29,9 +32,10 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
             .inMemory()  // Armazena os detalhes dos clientes em memória.
                 .withClient("algafood-web")  // Define o ID do cliente.
                 .secret(passwordEncoder.encode("web123")) // Senha do cliente codificado com PasswordEncoder.
-                .authorizedGrantTypes("password") // Tipo de concessão autorizado, passado via grant_type
+                .authorizedGrantTypes("password", "refresh_token") // Tipo de concessão autorizado, passado via grant_type
                 .scopes("write", "read")  //  Escopos permitidos.
                 .accessTokenValiditySeconds(60 * 60 * 4) // Validade do token de acesso de 4 horas
+
             .and()
                 .withClient("check-token") // outro client
                 .secret(passwordEncoder.encode("check123"))
@@ -51,7 +55,9 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
     @Override
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
 
-        endpoints.authenticationManager(authenticationManager);
+        endpoints
+            .authenticationManager(authenticationManager)
+            .userDetailsService(userDetailsService);
 
     }
 
@@ -65,4 +71,5 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 
 //      security.checkTokenAccess("permitAll()"); // Define que qualquer um pode acessar o endpoint que verifica a validade dos tokens
     }
+
 }
