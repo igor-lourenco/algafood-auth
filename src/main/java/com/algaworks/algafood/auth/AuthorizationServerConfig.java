@@ -33,8 +33,8 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
                 .scopes("write", "read")  //  Escopos permitidos.
                 .accessTokenValiditySeconds(60 * 60 * 4) // Validade do token de acesso de 4 horas
             .and()
-                .withClient("app-mobile") // outro client
-                .secret(passwordEncoder.encode("app123"))
+                .withClient("check-token") // outro client
+                .secret(passwordEncoder.encode("check123"))
                 .authorizedGrantTypes("password")
                 .scopes("write", "read");
 
