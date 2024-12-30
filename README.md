@@ -4,7 +4,7 @@ O Client Credentials Flow(Fluxo de Credenciais do Cliente) é um dos métodos de
 
 ## Fluxo de Autenticação
 
-A aplicação faz uma solicitação de token de acesso(Access Token), enviando suas credenciais de Client ID e Client Secret codificada em Base64:
+* A aplicação faz uma solicitação de token de acesso(Access Token), enviando suas credenciais de Client ID e Client Secret codificada em Base64:
 ```
 curl --location -X POST 'http://localhost:8081/oauth/token'
 --header 'Content-Type: application/x-www-form-urlencoded'
@@ -16,7 +16,7 @@ curl --location -X POST 'http://localhost:8081/oauth/token'
 ![Fluxo_0](https://github.com/igor-lourenco/algafood-auth/blob/feature/fluxo_Client_Credentials/images/fluxo_0.png)
 
 ##
-Caso o Client ID e Client Secret esteja registado no servidor, retorna o Access Token para o client:
+* Caso o Client ID e Client Secret esteja registado no servidor, retorna o Access Token para o client:
 ```
 HTTP/1.1 200
 Content-Type: application/json
@@ -33,6 +33,6 @@ Content-Type: application/json
 ![Fluxo_1](https://github.com/igor-lourenco/algafood-auth/blob/feature/fluxo_Client_Credentials/images/fluxo_1.png)
 
 ##
-Após receber o token, a aplicação pode utilizá-lo para acessar as APIs desejadas:
+* Após receber o token, a aplicação pode utilizá-lo para acessar as APIs desejadas:
 
 ![Fluxo_2](https://github.com/igor-lourenco/algafood-auth/blob/feature/fluxo_Client_Credentials/images/fluxo_2.png)
