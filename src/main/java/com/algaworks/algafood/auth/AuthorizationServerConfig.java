@@ -30,27 +30,21 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 
         clients
             .inMemory()  // Armazena os detalhes dos clientes em memória.
-                .withClient("algafood-web")  // Define o ID do client (esse client está sendo usado pelo postman)
-                .secret(passwordEncoder.encode("web123")) // Senha do cliente codificado com PasswordEncoder.
-                .authorizedGrantTypes("password", "refresh_token") // Tipo de concessão autorizado, passado via grant_type
-                .scopes("write", "read")  //  Escopos permitidos.
+                .withClient("faturamento") // outro client (esse client está sendo usado pelo pelo postman)
+                .secret(passwordEncoder.encode("faturamento123"))
+                .authorizedGrantTypes("client_credentials")
+                .scopes("write", "read")
                 .accessTokenValiditySeconds(60 * 60 * 4) // Validade do token de acesso de 4 horas
-                .refreshTokenValiditySeconds(60 * 60 * 24) // // Validade do refresh token de acesso de 24 horas
-
-            .and()
-                .withClient("check-token") // outro client (esse client está sendo usado pelo algafood-api)
-                .secret(passwordEncoder.encode("check123"))
-                .authorizedGrantTypes("password")
-                .scopes("write", "read");
+        ;
 
     }
 
 
 /** Este método define o AuthenticationManager que será usado para autenticar os usuários que tentam obter um token de
-  acesso usando o fluxo de senha (password grant type).
+  acesso usando o fluxo client credentials.
 
-    O AuthenticationManager é um componente que gerencia a autenticação dos usuários. Vai usar este gerenciador específico
- para autenticar os usuários quando eles solicitarem tokens de acesso, garantindo que apenas usuários autenticados
+    O AuthenticationManager é um componente que gerencia a autenticação dos clients. Vai usar este gerenciador específico
+ para autenticar os clients quando eles solicitarem tokens de acesso, garantindo que apenas clients autenticados
  possam obter tokens de acesso.
 */
     @Override
@@ -58,8 +52,7 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 
         endpoints
             .authenticationManager(authenticationManager)
-            .userDetailsService(userDetailsService)
-            .reuseRefreshTokens(false); // para não reutilizar o refresh token
+            .userDetailsService(userDetailsService);
 
     }
 

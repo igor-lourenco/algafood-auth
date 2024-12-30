@@ -18,20 +18,20 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @EnableWebSecurity  //  Habilita a configuração de segurança da web no Spring Security.
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
-
-    @Override // Configura a autenticação do usuário final (Resource Owner)
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-
-        auth.inMemoryAuthentication() // Indica que a autenticação será configurada em memória. Os dados dos usuários são definidos diretamente no código e mantidos apenas enquanto a aplicação está em execução.
-                .withUser("igor")
-                .password(passwordEncoder().encode("123"))
-                .roles("ADMIN")
-            .and()
-                .withUser("joao")
-                .password(passwordEncoder().encode("123"))
-                .roles("ADMIN");
-
-    }
+//    @Override // Configura a autenticação do usuário final (Resource Owner)
+//    Obs: Como o fluxo client credentials não possui usuario final(Resource Owner) então não precisa configurar esse método
+//    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+//
+//        auth.inMemoryAuthentication() // Indica que a autenticação será configurada em memória. Os dados dos usuários são definidos diretamente no código e mantidos apenas enquanto a aplicação está em execução.
+//                .withUser("igor")
+//                .password(passwordEncoder().encode("123"))
+//                .roles("ADMIN")
+//            .and()
+//                .withUser("joao")
+//                .password(passwordEncoder().encode("123"))
+//                .roles("ADMIN");
+//
+//    }
 
 
     @Bean // Define um bean de PasswordEncoder que usa BCryptPasswordEncoder para codificar senhas.
