@@ -41,7 +41,16 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
                 .withClient("check-token") // outro client (esse client está sendo usado pelo algafood-api)
                 .secret(passwordEncoder.encode("check123"))
                 .authorizedGrantTypes("password")
-                .scopes("write", "read");
+                .scopes("write", "read")
+
+            .and()
+                .withClient("foodanalitics") // outro client
+                .secret(passwordEncoder.encode("food123"))
+                .authorizedGrantTypes("authorization_code") // Tipo de concessão autorizado, passado via grant_type
+                .scopes("write", "read")
+                .redirectUris("http://aplicacao-cliente")
+
+        ;
 
     }
 
