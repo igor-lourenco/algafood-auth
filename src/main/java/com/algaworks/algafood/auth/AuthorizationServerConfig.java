@@ -10,6 +10,10 @@ import org.springframework.security.oauth2.config.annotation.web.configuration.A
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
+import org.springframework.security.oauth2.provider.CompositeTokenGranter;
+import org.springframework.security.oauth2.provider.TokenGranter;
+
+import java.util.Arrays;
 
 /**  Essa classe é responsável por configurar o servidor de autorização OAuth2, de como os clientes se autenticam e
   obtêm tokens de acesso.  */
@@ -41,13 +45,21 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
                 .withClient("check-token") // outro client (esse client está sendo usado pelo algafood-api)
                 .secret(passwordEncoder.encode("check123"))
                 .authorizedGrantTypes("password")
-                .scopes("write", "read");
+                .scopes("write", "read")
+
+            .and()
+            .withClient("foodanalitics") // outro client
+            .secret(passwordEncoder.encode("food123"))
+            .authorizedGrantTypes("authorization_code") // Tipo de concessão autorizado, passado via grant_type
+            .scopes("write", "read")
+            .redirectUris("http://aplicacao-cliente")
+        ;
 
     }
 
 
 /** Este método define o AuthenticationManager que será usado para autenticar os usuários que tentam obter um token de
-  acesso usando o fluxo de senha (password grant type).
+  acesso usando o fluxo de senha (por exemplo: password grant type).
 
     O AuthenticationManager é um componente que gerencia a autenticação dos usuários. Vai usar este gerenciador específico
  para autenticar os usuários quando eles solicitarem tokens de acesso, garantindo que apenas usuários autenticados
@@ -59,8 +71,8 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
         endpoints
             .authenticationManager(authenticationManager)
             .userDetailsService(userDetailsService)
-            .reuseRefreshTokens(false); // para não reutilizar o refresh token
-
+            .reuseRefreshTokens(false) // para não reutilizar o refresh token
+            .tokenGranter(tokenGranter(endpoints));// Configura o nosso TokenGranter personalizado para usar a nossa implementação do PKCE
     }
 
 
@@ -74,4 +86,21 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 //      security.checkTokenAccess("permitAll()"); // Define que qualquer um pode acessar o endpoint que verifica a validade dos tokens
     }
 
+
+/** Configura um TokenGranter composto que inclui suporte para PKCE (via PkceAuthorizationCodeTokenGranter)
+    além dos outros TokenGranter padrão configurado nos endpoints do servidor de autorização, passados como parâmetro via grant_type */
+    private TokenGranter tokenGranter(AuthorizationServerEndpointsConfigurer endpoints) {
+
+       //criado nosso objeto PkceAuthorizationCodeTokenGranter, passando os serviços necessários
+        var pkceAuthorizationCodeTokenGranter = new PkceAuthorizationCodeTokenGranter(endpoints.getTokenServices(),
+            endpoints.getAuthorizationCodeServices(), endpoints.getClientDetailsService(),
+            endpoints.getOAuth2RequestFactory());
+
+        //Lista de TokenGranter é criada contendo o nosso PkceAuthorizationCodeTokenGranter recém-criado e o TokenGranter padrão obtido do endpoints.
+        var granters = Arrays.asList(
+            pkceAuthorizationCodeTokenGranter, endpoints.getTokenGranter());
+
+//      CompositeTokenGranter combina múltiplos TokenGranters em um único TokenGranter.
+        return new CompositeTokenGranter(granters);
+    }
 }
