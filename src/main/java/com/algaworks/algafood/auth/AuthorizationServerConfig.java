@@ -52,7 +52,7 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
             .secret(passwordEncoder.encode("food123"))
             .authorizedGrantTypes("authorization_code") // Tipo de concessão autorizado, passado via grant_type
             .scopes("write", "read")
-            .redirectUris("http://aplicacao-cliente")
+            .redirectUris("http://aplicacao_cliente")
         ;
 
     }

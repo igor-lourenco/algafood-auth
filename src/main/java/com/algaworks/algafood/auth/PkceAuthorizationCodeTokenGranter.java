@@ -67,7 +67,7 @@ public class PkceAuthorizationCodeTokenGranter extends AuthorizationCodeTokenGra
         } else if ("s256".equalsIgnoreCase(codeChallengeMethod)) {
             generatedCodeChallenge = generateHashSha256(codeVerifier);
         } else {
-            throw new InvalidGrantException(codeChallengeMethod + " não é um challenge method válido.");
+            throw new InvalidGrantException(codeChallengeMethod + " não é um code_challenge_method válido.");
         }
 
         return generatedCodeChallenge.equals(codeChallenge);
