@@ -15,7 +15,8 @@ curl --location -X POST 'http://localhost:8081/oauth/token' \
 --data-urlencode 'grant_type=password'
 ```
 
-![Fluxo_0](https://github.com/igor-lourenco/algafood-auth/blob/main/images/fluxo_0.png)
+![Fluxo_0](https://github.com/igor-lourenco/algafood-auth/blob/feature/fluxo_Resource_Owner_Passoword_Credentials/images/fluxo_0.png)
+
 
 ##
 * O Servidor de autorização valida as credenciais e retorna o Access Token(e opcionalmente um refresh token) com um tempo válido determinado pelo servidor de autorização:
@@ -30,12 +31,12 @@ curl --location -X POST 'http://localhost:8081/oauth/token' \
 }
 ```
 
-![Fluxo_1](https://github.com/igor-lourenco/algafood-auth/blob/main/images/fluxo_1.png)
+![Fluxo_1](https://github.com/igor-lourenco/algafood-auth/blob/feature/fluxo_Resource_Owner_Passoword_Credentials/images/fluxo_1.png)
 
 ##
 * Após receber o token, o Client pode utilizá-lo para acessar as APIs desejadas do Resource Server:
   
-![Fluxo_2](https://github.com/igor-lourenco/algafood-auth/blob/main/images/fluxo_2.png)
+![Fluxo_2](https://github.com/igor-lourenco/algafood-auth/blob/feature/fluxo_Resource_Owner_Passoword_Credentials/images/fluxo_2.png)
 
 
 
@@ -52,7 +53,7 @@ curl --location -X POST 'http://localhost:8081/oauth/token' \
 --data-urlencode 'grant_type=password'
 ```
 
-![Fluxo_0](https://github.com/igor-lourenco/algafood-auth/blob/main/images/fluxo_0.png)
+![Fluxo_0](https://github.com/igor-lourenco/algafood-auth/blob/feature/fluxo_Resource_Owner_Passoword_Credentials/images/fluxo_0.png)
 
 ##
 * O Servidor de autorização valida as credenciais e retorna o Access Token e um Refresh Token com um tempo válido determinado:
@@ -68,13 +69,13 @@ curl --location -X POST 'http://localhost:8081/oauth/token' \
 }
 ```
 
-![Fluxo_3](https://github.com/igor-lourenco/algafood-auth/blob/main/images/fluxo_3.png)
+![Fluxo_3](https://github.com/igor-lourenco/algafood-auth/blob/feature/fluxo_Resource_Owner_Passoword_Credentials/images/fluxo_3.png)
 
 
 ##
 * Depois de um certo tempo determinado pelo servidor de autorização o Access Token é expirado:
 
-![Fluxo_4](https://github.com/igor-lourenco/algafood-auth/blob/main/images/fluxo_4.png)
+![Fluxo_4](https://github.com/igor-lourenco/algafood-auth/blob/feature/fluxo_Resource_Owner_Passoword_Credentials/images/fluxo_4.png)
 
 
 ##
@@ -88,7 +89,7 @@ curl --location -X POST 'http://localhost:8081/oauth/token' \
 --data-urlencode 'grant_type=refresh_token'
 ```
 
-![Fluxo_5](https://github.com/igor-lourenco/algafood-auth/blob/main/images/fluxo_5.png)
+![Fluxo_5](https://github.com/igor-lourenco/algafood-auth/blob/feature/fluxo_Resource_Owner_Passoword_Credentials/images/fluxo_5.png)
 
 
 ##
@@ -105,13 +106,13 @@ curl --location -X POST 'http://localhost:8081/oauth/token' \
 }
 ```
 
-![Fluxo_6](https://github.com/igor-lourenco/algafood-auth/blob/main/images/fluxo_6.png)
+![Fluxo_6](https://github.com/igor-lourenco/algafood-auth/blob/feature/fluxo_Resource_Owner_Passoword_Credentials/images/fluxo_6.png)
 
 
 ##
 * Após receber um novo token, o Client pode utilizá-lo para acessar as APIs desejadas do Resource Server:
   
-![Fluxo_7](https://github.com/igor-lourenco/algafood-auth/blob/main/images/fluxo_7.png)
+![Fluxo_7](https://github.com/igor-lourenco/algafood-auth/blob/feature/fluxo_Resource_Owner_Passoword_Credentials/images/fluxo_7.png)
 
 
 ### Observação:
