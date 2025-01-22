@@ -68,6 +68,14 @@
 			<artifactId>jaxb-impl</artifactId>
 			<version>${javax-jaxb.version}</version>
 		</dependency>
+
+
+		<!-- DEPENDENCIA PARA BANCO DA DADOS NOSQL REDIS	-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-redis</artifactId>
+		</dependency>
+
 	</dependencies>
 
 	<build>
