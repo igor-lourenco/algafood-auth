@@ -1,7 +1,9 @@
 package com.algaworks.algafood.auth;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.cache.CacheProperties;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -12,6 +14,8 @@ import org.springframework.security.oauth2.config.annotation.web.configurers.Aut
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
 import org.springframework.security.oauth2.provider.CompositeTokenGranter;
 import org.springframework.security.oauth2.provider.TokenGranter;
+import org.springframework.security.oauth2.provider.token.TokenStore;
+import org.springframework.security.oauth2.provider.token.store.redis.RedisTokenStore;
 
 import java.util.Arrays;
 
@@ -27,6 +31,8 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
     private AuthenticationManager authenticationManager;
     @Autowired
     private UserDetailsService userDetailsService;
+    @Autowired
+    private RedisConnectionFactory redisConnectionFactory;
 
 
     @Override //  Configurar os detalhes dos clientes OAuth2. (nesse caso o cliente Web, App, etc...)
@@ -72,6 +78,7 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
             .authenticationManager(authenticationManager)
             .userDetailsService(userDetailsService)
             .reuseRefreshTokens(false) // para não reutilizar o refresh token
+            .tokenStore(redisTokenStore()) // Configura onde os tokens de autenticação serão armazenados.
             .tokenGranter(tokenGranter(endpoints));// Configura o nosso TokenGranter personalizado para usar a nossa implementação do PKCE
     }
 
@@ -102,5 +109,11 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 
 //      CompositeTokenGranter combina múltiplos TokenGranters em um único TokenGranter.
         return new CompositeTokenGranter(granters);
+    }
+
+
+/** Retorna uma instância com as configurações de conexão com banco Redis para armazenamento dos tokens */
+    private TokenStore redisTokenStore(){
+        return new RedisTokenStore(redisConnectionFactory);
     }
 }
