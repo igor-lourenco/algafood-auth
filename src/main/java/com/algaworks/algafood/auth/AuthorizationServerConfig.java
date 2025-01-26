@@ -117,8 +117,11 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 
 //      Define que apenas clientes autenticados podem acessar o endpoint que verifica a validade dos tokens. '/oauth/check_token'
         security.checkTokenAccess("isAuthenticated()");
-
 //      security.checkTokenAccess("permitAll()"); // Define que qualquer um pode acessar o endpoint que verifica a validade dos tokens
+
+
+        // libera a API que retorna a chave pública mas apenas para os clientes autenticados que terão acesso: '/oauth/token_key'
+        security.tokenKeyAccess("isAuthenticated()");
     }
 
 
