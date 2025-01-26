@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.cache.CacheProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -17,8 +18,10 @@ import org.springframework.security.oauth2.provider.CompositeTokenGranter;
 import org.springframework.security.oauth2.provider.TokenGranter;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
+import org.springframework.security.oauth2.provider.token.store.KeyStoreKeyFactory;
 import org.springframework.security.oauth2.provider.token.store.redis.RedisTokenStore;
 
+import java.security.KeyPair;
 import java.util.Arrays;
 
 /**  Essa classe é responsável por configurar o servidor de autorização OAuth2, de como os clientes se autenticam e
@@ -77,7 +80,26 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
     public JwtAccessTokenConverter jwtAccessTokenConverter(){
         JwtAccessTokenConverter jwtAccessTokenConverter =  new JwtAccessTokenConverter();
 
-        jwtAccessTokenConverter.setSigningKey("89f35f44-a025-4ed0-bb7e-950c033d9563"); // chave secreta simétrica
+//      ---- Dessa forma configura para gerar JWT com chave simétrica ----
+//      jwtAccessTokenConverter.setSigningKey("89f35f44-a025-4ed0-bb7e-950c033d9563"); // chave secreta simétrica, por padrão usa o algoritmo "HmacSHA256"
+
+//      ----------------------------------------------------------------------------------------------------------------
+
+//      ---- Dessa forma configura para gerar JWT com chave assimétrica ----
+//      Classe para representar um recurso (geralmente um arquivo) localizado no classpath da aplicação.
+        ClassPathResource classPathResource = new ClassPathResource("keystore/algafood.jks");
+
+        String keyStorePass = "123456"; // senha que foi criada para abrir o arquivo algafood.jks
+        String keyPairAlias = "algafood"; // é o nome do par de chaves especificado criado no parâmetro: -alias
+
+//      A classe KeyStoreKeyFactory é utilizada para carregar e manipular informações de um keystore.
+//      Um keystore é um armazenamento seguro que contém pares de chaves (chave pública e chave privada),
+//      certificados e outras informações relacionadas à criptografia.
+        KeyStoreKeyFactory keyStoreKeyFactory = new KeyStoreKeyFactory(classPathResource, keyStorePass.toCharArray());
+
+        KeyPair keyPair = keyStoreKeyFactory.getKeyPair(keyPairAlias); //Extrai o par de chaves específico do keyStoreKeyFactory usando o alias fornecido.
+
+        jwtAccessTokenConverter.setKeyPair(keyPair); // Configura o par de chaves extraído no jwtAccessTokenConverter.
 
         return jwtAccessTokenConverter;
     }
