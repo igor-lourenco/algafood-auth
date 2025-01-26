@@ -76,6 +76,13 @@
 			<artifactId>spring-boot-starter-data-redis</artifactId>
 		</dependency>
 
+		<!-- DEPENDENCIA PARA Token JWT (JSON Web Token)	-->
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-jwt</artifactId>
+			<version>1.0.11.RELEASE</version>
+		</dependency>
+
 	</dependencies>
 
 	<build>

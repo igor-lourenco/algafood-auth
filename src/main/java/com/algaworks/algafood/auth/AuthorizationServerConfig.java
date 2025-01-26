@@ -2,6 +2,7 @@ package com.algaworks.algafood.auth;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.cache.CacheProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -15,6 +16,7 @@ import org.springframework.security.oauth2.config.annotation.web.configurers.Aut
 import org.springframework.security.oauth2.provider.CompositeTokenGranter;
 import org.springframework.security.oauth2.provider.TokenGranter;
 import org.springframework.security.oauth2.provider.token.TokenStore;
+import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.redis.RedisTokenStore;
 
 import java.util.Arrays;
@@ -31,8 +33,6 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
     private AuthenticationManager authenticationManager;
     @Autowired
     private UserDetailsService userDetailsService;
-    @Autowired
-    private RedisConnectionFactory redisConnectionFactory;
 
 
     @Override //  Configurar os detalhes dos clientes OAuth2. (nesse caso o cliente Web, App, etc...)
@@ -40,37 +40,26 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 
         clients
             .inMemory()  // Armazena os detalhes dos clientes em memória.
-                .withClient("algafood-web")  // Define o ID do client (esse client está sendo usado pelo postman)
-                .secret(passwordEncoder.encode("web123")) // Senha do cliente codificado com PasswordEncoder.
-                .authorizedGrantTypes("password", "refresh_token") // Tipo de concessão autorizado, passado via grant_type
-                .scopes("write", "read")  //  Escopos permitidos.
-                .accessTokenValiditySeconds(60 * 60 * 4) // Validade do token de acesso de 4 horas
-                .refreshTokenValiditySeconds(60 * 60 * 24) // // Validade do refresh token de acesso de 24 horas
+            .withClient("algafood-web")  // Define o ID do client (esse client está sendo usado pelo postman)
+            .secret(passwordEncoder.encode("web123")) // Senha do cliente codificado com PasswordEncoder.
+            .authorizedGrantTypes("password", "refresh_token") // Tipo de concessão autorizado, passado via grant_type
+            .scopes("write", "read")  //  Escopos permitidos.
+            .accessTokenValiditySeconds(60 * 60 * 4) // Validade do token de acesso de 4 horas
+            .refreshTokenValiditySeconds(60 * 60 * 24) // // Validade do refresh token de acesso de 24 horas
 
-            .and()
-                .withClient("check-token") // outro client (esse client está sendo usado pelo algafood-api)
-                .secret(passwordEncoder.encode("check123"))
-                .authorizedGrantTypes("password")
-                .scopes("write", "read")
-
-            .and()
-            .withClient("foodanalitics") // outro client
-            .secret(passwordEncoder.encode("food123"))
-            .authorizedGrantTypes("authorization_code") // Tipo de concessão autorizado, passado via grant_type
-            .scopes("write", "read")
-            .redirectUris("http://aplicacao_cliente")
         ;
 
     }
 
 
-/** Este método define o AuthenticationManager que será usado para autenticar os usuários que tentam obter um token de
-  acesso usando o fluxo de senha (por exemplo: password grant type).
-
-    O AuthenticationManager é um componente que gerencia a autenticação dos usuários. Vai usar este gerenciador específico
- para autenticar os usuários quando eles solicitarem tokens de acesso, garantindo que apenas usuários autenticados
- possam obter tokens de acesso.
-*/
+    /**
+     * Este método define o AuthenticationManager que será usado para autenticar os usuários que tentam obter um token de
+     * acesso usando o fluxo de senha (por exemplo: password grant type).
+     * <p>
+     * O AuthenticationManager é um componente que gerencia a autenticação dos usuários. Vai usar este gerenciador específico
+     * para autenticar os usuários quando eles solicitarem tokens de acesso, garantindo que apenas usuários autenticados
+     * possam obter tokens de acesso.
+     */
     @Override
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
 
@@ -78,12 +67,26 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
             .authenticationManager(authenticationManager)
             .userDetailsService(userDetailsService)
             .reuseRefreshTokens(false) // para não reutilizar o refresh token
-            .tokenStore(redisTokenStore()) // Configura onde os tokens de autenticação serão armazenados.
-            .tokenGranter(tokenGranter(endpoints));// Configura o nosso TokenGranter personalizado para usar a nossa implementação do PKCE
+            .tokenGranter(tokenGranter(endpoints))// Configura o nosso TokenGranter personalizado para usar a nossa implementação do PKCE
+            .accessTokenConverter(jwtAccessTokenConverter()) // Informa para usar o JwtAccessTokenConverter especificado para converter tokens de acesso JWT.
+
+            ;
+    }
+
+    @Bean // Usado para converter e validar tokens JWT com uma chave de assinatura específica(chave secreta)
+    public JwtAccessTokenConverter jwtAccessTokenConverter(){
+        JwtAccessTokenConverter jwtAccessTokenConverter =  new JwtAccessTokenConverter();
+
+        jwtAccessTokenConverter.setSigningKey("89f35f44-a025-4ed0-bb7e-950c033d9563"); // chave secreta simétrica
+
+        return jwtAccessTokenConverter;
     }
 
 
-/** Este método configura as políticas de segurança para o servidor de autorização, especificamente para os endpoints que o servidor expõe. */
+
+    /**
+     * Este método configura as políticas de segurança para o servidor de autorização, especificamente para os endpoints que o servidor expõe.
+     */
     @Override
     public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
 
@@ -94,11 +97,13 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
     }
 
 
-/** Configura um TokenGranter composto que inclui suporte para PKCE (via PkceAuthorizationCodeTokenGranter)
-    além dos outros TokenGranter padrão configurado nos endpoints do servidor de autorização, passados como parâmetro via grant_type */
+    /**
+     * Configura um TokenGranter composto que inclui suporte para PKCE (via PkceAuthorizationCodeTokenGranter)
+     * além dos outros TokenGranter padrão configurado nos endpoints do servidor de autorização, passados como parâmetro via grant_type
+     */
     private TokenGranter tokenGranter(AuthorizationServerEndpointsConfigurer endpoints) {
 
-       //criado nosso objeto PkceAuthorizationCodeTokenGranter, passando os serviços necessários
+        //criado nosso objeto PkceAuthorizationCodeTokenGranter, passando os serviços necessários
         var pkceAuthorizationCodeTokenGranter = new PkceAuthorizationCodeTokenGranter(endpoints.getTokenServices(),
             endpoints.getAuthorizationCodeServices(), endpoints.getClientDetailsService(),
             endpoints.getOAuth2RequestFactory());
@@ -110,10 +115,5 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 //      CompositeTokenGranter combina múltiplos TokenGranters em um único TokenGranter.
         return new CompositeTokenGranter(granters);
     }
-
-
-/** Retorna uma instância com as configurações de conexão com banco Redis para armazenamento dos tokens */
-    private TokenStore redisTokenStore(){
-        return new RedisTokenStore(redisConnectionFactory);
-    }
 }
+
