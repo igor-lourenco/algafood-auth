@@ -1,5 +1,6 @@
 package com.algaworks.algafood.auth;
 
+import com.algaworks.algafood.auth.properties.JwtKeyStoreProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.cache.CacheProperties;
 import org.springframework.context.annotation.Bean;
@@ -36,6 +37,8 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
     private AuthenticationManager authenticationManager;
     @Autowired
     private UserDetailsService userDetailsService;
+    @Autowired
+    private JwtKeyStoreProperties properties;
 
 
     @Override //  Configurar os detalhes dos clientes OAuth2. (nesse caso o cliente Web, App, etc...)
@@ -87,10 +90,10 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 
 //      ---- Dessa forma configura para gerar JWT com chave assimétrica ----
 //      Classe para representar um recurso (geralmente um arquivo) localizado no classpath da aplicação.
-        ClassPathResource classPathResource = new ClassPathResource("keystore/algafood.jks");
+        ClassPathResource classPathResource = new ClassPathResource(properties.getPath());
 
-        String keyStorePass = "123456"; // senha que foi criada para abrir o arquivo algafood.jks
-        String keyPairAlias = "algafood"; // é o nome do par de chaves especificado criado no parâmetro: -alias
+        String keyStorePass = properties.getPassword(); // senha que foi criada para abrir o arquivo algafood.jks
+        String keyPairAlias = properties.getKeypairAlias(); // é o nome do par de chaves especificado criado no parâmetro: -alias
 
 //      A classe KeyStoreKeyFactory é utilizada para carregar e manipular informações de um keystore.
 //      Um keystore é um armazenamento seguro que contém pares de chaves (chave pública e chave privada),
