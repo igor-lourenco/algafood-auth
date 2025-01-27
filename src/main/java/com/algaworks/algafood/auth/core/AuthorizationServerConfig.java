@@ -1,12 +1,11 @@
-package com.algaworks.algafood.auth;
+package com.algaworks.algafood.auth.core;
 
+import com.algaworks.algafood.auth.core.PkceAuthorizationCodeTokenGranter;
 import com.algaworks.algafood.auth.properties.JwtKeyStoreProperties;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.cache.CacheProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,10 +16,11 @@ import org.springframework.security.oauth2.config.annotation.web.configurers.Aut
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
 import org.springframework.security.oauth2.provider.CompositeTokenGranter;
 import org.springframework.security.oauth2.provider.TokenGranter;
+import org.springframework.security.oauth2.provider.approval.ApprovalStore;
+import org.springframework.security.oauth2.provider.approval.TokenApprovalStore;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.KeyStoreKeyFactory;
-import org.springframework.security.oauth2.provider.token.store.redis.RedisTokenStore;
 
 import java.security.KeyPair;
 import java.util.Arrays;
@@ -73,9 +73,9 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
             .authenticationManager(authenticationManager)
             .userDetailsService(userDetailsService)
             .reuseRefreshTokens(false) // para não reutilizar o refresh token
-            .tokenGranter(tokenGranter(endpoints))// Configura o nosso TokenGranter personalizado para usar a nossa implementação do PKCE
             .accessTokenConverter(jwtAccessTokenConverter()) // Informa para usar o JwtAccessTokenConverter especificado para converter tokens de acesso JWT.
-
+            .approvalStore(approvalStore(endpoints.getTokenStore()))
+            .tokenGranter(tokenGranter(endpoints))// Configura o nosso TokenGranter personalizado para usar a nossa implementação do PKCE
             ;
     }
 
@@ -142,6 +142,15 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 
 //      CompositeTokenGranter combina múltiplos TokenGranters em um único TokenGranter.
         return new CompositeTokenGranter(granters);
+    }
+
+
+//  Para o fluxo de aprovação do Authorization Code com JWT
+    private ApprovalStore approvalStore(TokenStore tokenStore){
+        var approvalStore = new TokenApprovalStore();
+        approvalStore.setTokenStore(tokenStore);
+
+        return approvalStore;
     }
 }
 
