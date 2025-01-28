@@ -14,12 +14,13 @@ public class AuthUser extends User implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String fullName;
-//  private String email;
+    private Long userId;
 
 
     public AuthUser(UsuarioModel model) {
         super(model.getEmail(), model.getSenha(), Collections.emptyList()); // construtor User
 
         this.fullName = model.getNome();
+        this.userId = model.getId();
     }
 }

@@ -1,7 +1,7 @@
 package com.algaworks.algafood.auth.core;
 
-import com.algaworks.algafood.auth.core.PkceAuthorizationCodeTokenGranter;
 import com.algaworks.algafood.auth.properties.JwtKeyStoreProperties;
+import com.algaworks.algafood.auth.services.enhancers.JwtCustomClaimsTokenEnhancer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +18,7 @@ import org.springframework.security.oauth2.provider.CompositeTokenGranter;
 import org.springframework.security.oauth2.provider.TokenGranter;
 import org.springframework.security.oauth2.provider.approval.ApprovalStore;
 import org.springframework.security.oauth2.provider.approval.TokenApprovalStore;
+import org.springframework.security.oauth2.provider.token.TokenEnhancerChain;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.KeyStoreKeyFactory;
@@ -69,11 +70,18 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
     @Override
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
 
+        var enhancerChain = new TokenEnhancerChain(); // representa a cadeia de enhancer que serve para personalizar o payload JSON do JWT
+
+        // adiciona a nossa classe de enhancer personalizada, obs: a nossa classe tem que ser a primeira da lista
+        enhancerChain.setTokenEnhancers(Arrays.asList(new JwtCustomClaimsTokenEnhancer(),jwtAccessTokenConverter()));
+
+
         endpoints
             .authenticationManager(authenticationManager)
             .userDetailsService(userDetailsService)
             .reuseRefreshTokens(false) // para não reutilizar o refresh token
             .accessTokenConverter(jwtAccessTokenConverter()) // Informa para usar o JwtAccessTokenConverter especificado para converter tokens de acesso JWT.
+            .tokenEnhancer(enhancerChain)
             .approvalStore(approvalStore(endpoints.getTokenStore()))
             .tokenGranter(tokenGranter(endpoints))// Configura o nosso TokenGranter personalizado para usar a nossa implementação do PKCE
             ;
