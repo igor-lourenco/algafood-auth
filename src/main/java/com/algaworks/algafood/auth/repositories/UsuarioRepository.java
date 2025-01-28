@@ -1,5 +1,6 @@
-package com.algaworks.algafood.auth.models;
+package com.algaworks.algafood.auth.repositories;
 
+import com.algaworks.algafood.auth.models.UsuarioModel;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

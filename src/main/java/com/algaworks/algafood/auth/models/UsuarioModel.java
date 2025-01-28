@@ -5,6 +5,8 @@ import lombok.EqualsAndHashCode;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "TB_USUARIO")
@@ -31,13 +33,13 @@ public class UsuarioModel implements Serializable {
 //    private LocalDateTime dataCadastro;
 
 //    @JsonIgnore
-//    @ManyToMany
-//    @JoinTable(name = "TB_USUARIO_GRUPO", // específica o nome da tabela que vai ser criada para mapear as associações
-//        joinColumns = @JoinColumn(name = "usuario_id"), // id da própria classe
-//        inverseJoinColumns = @JoinColumn(name = "grupo_id") // id da outra tabela
-//    )
-//    private Set<GrupoModel> grupos = new HashSet<>();
-//
+    @ManyToMany
+    @JoinTable(name = "TB_USUARIO_GRUPO", // específica o nome da tabela que vai ser criada para mapear as associações
+        joinColumns = @JoinColumn(name = "usuario_id"), // id da própria classe
+        inverseJoinColumns = @JoinColumn(name = "grupo_id") // id da outra tabela
+    )
+    private Set<GrupoModel> grupos = new HashSet<>();
+
 //    public Boolean associaGrupo(GrupoModel grupoModel){
 //        return grupos.add(grupoModel);
 //    }
