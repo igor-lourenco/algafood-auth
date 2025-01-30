@@ -27,7 +27,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         return super.authenticationManager();
     }
 
-//    Implementação para usar os dados do usuário em memória
+//    Implementação para usar os dados do usuário em memória. Obs: foi implementado para pegar usuario final no banco de dados(UsuarioModel)
 //    @Override // Configura a autenticação do usuário final (Resource Owner)
 //    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
 //

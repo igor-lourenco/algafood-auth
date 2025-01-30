@@ -50,7 +50,7 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
             .withClient("algafood-web")  // Define o ID do client (esse client está sendo usado pelo postman)
             .secret(passwordEncoder.encode("web123")) // Senha do cliente codificado com PasswordEncoder.
             .authorizedGrantTypes("password", "refresh_token") // Tipo de concessão autorizado, passado via grant_type
-            .scopes("write", "read")  //  Escopos permitidos.
+            .scopes("WRITE", "READ")  //  Escopos permitidos para os clients.
             .accessTokenValiditySeconds(60 * 60 * 4) // Validade do token de acesso de 4 horas
             .refreshTokenValiditySeconds(60 * 60 * 24) // // Validade do refresh token de acesso de 24 horas
 
