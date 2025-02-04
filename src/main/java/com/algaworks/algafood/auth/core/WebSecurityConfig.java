@@ -8,7 +8,7 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-/**  Essa classe configura a segurança da aplicação web em geral, definindo usuários em memória, codificando senhas
+/**  Essa classe configura a segurança da aplicação web em geral, definindo usuários, codificando senhas
   com BCrypt e fornecendo um gerenciador de autenticação.  */
 @Configuration
 @EnableWebSecurity  //  Habilita a configuração de segurança da web no Spring Security.

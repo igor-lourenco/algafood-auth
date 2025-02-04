@@ -8,7 +8,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
@@ -23,6 +22,7 @@ import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.KeyStoreKeyFactory;
 
+import javax.sql.DataSource;
 import java.security.KeyPair;
 import java.util.Arrays;
 
@@ -32,27 +32,30 @@ import java.util.Arrays;
 @EnableAuthorizationServer // Habilita a configuração do servidor de autorização OAuth2.
 public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdapter {
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+//    @Autowired
+//    private PasswordEncoder passwordEncoder;
     @Autowired
     private AuthenticationManager authenticationManager;
     @Autowired
     private UserDetailsService userDetailsService;
     @Autowired
     private JwtKeyStoreProperties properties;
-
+    @Autowired
+    private DataSource dataSource;
 
     @Override //  Configurar os detalhes dos clientes OAuth2. (nesse caso o cliente Web, App, etc...)
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
 
-        clients
-            .inMemory()  // Armazena os detalhes dos clientes em memória.
-            .withClient("algafood-web")  // Define o ID do client (esse client está sendo usado pelo postman)
-            .secret(passwordEncoder.encode("web123")) // Senha do cliente codificado com PasswordEncoder.
-            .authorizedGrantTypes("password", "refresh_token") // Tipo de concessão autorizado, passado via grant_type
-            .scopes("WRITE", "READ")  //  Escopos permitidos para os clients.
-            .accessTokenValiditySeconds(60 * 60 * 4) // Validade do token de acesso de 4 horas
-            .refreshTokenValiditySeconds(60 * 60 * 24) // // Validade do refresh token de acesso de 24 horas
+        clients.jdbc(dataSource)
+
+//        Exemplo de implementacao de clientes hardcode (mocados diretamente no código)
+//            .inMemory()  // Armazena os detalhes dos clientes em memória.
+//            .withClient("algafood-web")  // Define o ID do client (esse client está sendo usado pelo postman)
+//            .secret(passwordEncoder.encode("web123")) // Senha do cliente codificado com PasswordEncoder.
+//            .authorizedGrantTypes("password", "refresh_token") // Tipo de concessão autorizado, passado via grant_type
+//            .scopes("WRITE", "READ")  //  Escopos permitidos para os clients.
+//            .accessTokenValiditySeconds(60 * 60 * 4) // Validade do token de acesso de 4 horas
+//            .refreshTokenValiditySeconds(60 * 60 * 24) // // Validade do refresh token de acesso de 24 horas
 
         ;
 
