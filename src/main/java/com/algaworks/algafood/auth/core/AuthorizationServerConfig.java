@@ -27,14 +27,17 @@ import java.util.Arrays;
 /**  Essa classe é responsável por configurar o servidor de autorização OAuth2, de como os clientes se autenticam e obtêm tokens de acesso.  */
 //@EnableAuthorizationServer // Habilita a configuração do servidor de autorização OAuth2.
 @Configuration
-public class AuthorizationServerConfig  {
+public class AuthorizationServerConfig {
+
 
     @Bean // Aplica as configurações padrão de segurança do OAuth2 ao HttpSecurity
     @Order(Ordered.HIGHEST_PRECEDENCE)
     public SecurityFilterChain authFilterChain(HttpSecurity http) throws Exception {
         OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
+
         return http.build();
     }
+
 
     @Bean // Define as configurações do provedor de identidade, incluindo a URL do emissor (issuer)
     public ProviderSettings providerSettings(AlgafoodSecurityProperties properties) {
@@ -50,11 +53,14 @@ public class AuthorizationServerConfig  {
             .withId("1")
             .clientId("algafood-web")
             .clientSecret(passwordEncoder.encode("web123"))
-            .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC) // token opaco
+            .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
             .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS) // fluxo client credentials
             .scope("READ")
             .tokenSettings(TokenSettings.builder()
-                .accessTokenFormat(OAuth2TokenFormat.REFERENCE)
+
+//              .accessTokenFormat(OAuth2TokenFormat.REFERENCE) // Token opaco
+                .accessTokenFormat(OAuth2TokenFormat.SELF_CONTAINED) // Token JWT
+
                 .accessTokenTimeToLive(Duration.ofMinutes(30))
                 .build())
             .build();
@@ -65,11 +71,13 @@ public class AuthorizationServerConfig  {
     }
 
 
-    @Bean // Configura serviço de autorização OAuth2 baseado em JDBC para armazenar e gerenciar autorizações de clientes.
-    public OAuth2AuthorizationService oAuth2AuthorizationService(JdbcOperations jdbcOperations, RegisteredClientRepository registeredClientRepository){
-        return new JdbcOAuth2AuthorizationService(jdbcOperations, registeredClientRepository);
+    @Bean
+    // Configura serviço de autorização OAuth2 baseado em JDBC para armazenar e gerenciar autorizações de clientes.
+    public OAuth2AuthorizationService oAuth2AuthorizationService(JdbcOperations jdbcOperations, RegisteredClientRepository registeredClientRepository) {
+        return new JdbcOAuth2AuthorizationService(jdbcOperations, registeredClientRepository); // sem usar a implementaçã customizada
+//        return new CustomOAuth2AuthorizationService(jdbcOperations, registeredClientRepository);
     }
 
-
 }
+
 
