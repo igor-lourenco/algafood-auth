@@ -45,15 +45,16 @@ public class JwtConfig {
         return new ImmutableJWKSet<>(new JWKSet(rsaKey));
     }
 
+    // Esse bean é responsável por adicionar claims customizadas na geração do token JWT
     @Bean
     public OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer(UsuarioRepository userRepository) {
-
-
+        log.info(">>> CARREGANDO BEAN PARA CUSTOMIZACAO DAS CLAIMS NA GERACAO DO TOKEN JWT");
         return context -> {
             Authentication authentication = context.getPrincipal();
             if (authentication.getPrincipal() instanceof User) {
                 User userDetail = (User) authentication.getPrincipal();
 
+                log.info(">>> Buscando no banco de dados o username: {}", userDetail.getUsername());
                 UsuarioModel user = userRepository.findByEmail(userDetail.getUsername()).orElseThrow();
 
                 Set<String> authorities = new HashSet<>();
@@ -61,19 +62,13 @@ public class JwtConfig {
                     authorities.add(authority.getAuthority());
                 }
 
-                context.getClaims().claim("user_id", user.getId().toString());
-                context.getClaims().claim("authorities", authorities);
+                log.info(">>> Adicionando claim customizada user_id: {}", user.getId().toString());
+                context.getClaims().claim("user_id", user.getId().toString()); // adiciona o id do usuario no token
+
+                log.info(">>> Adicionando claim customizada authorities: {}", authorities);
+                context.getClaims().claim("authorities", authorities); // adiciona lista de authorities do usuario no token
             }
         };
     }
-
-
-//    @Bean
-//    public OAuth2AuthorizationConsentService consentService(JdbcOperations jdbcOperations,
-//                                                            RegisteredClientRepository clientRepository) {
-//        return new JdbcOAuth2AuthorizationConsentService(jdbcOperations, clientRepository);
-//    }
-
-
 
 }

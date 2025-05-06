@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -35,11 +36,12 @@ public class JpaUserDetailsService implements UserDetailsService {
             });
 
         log.info(">>> Informações carregadas [loadUserByUsername] :: " + username);
-        return new AuthUser(usuarioModel, getAuthorities(usuarioModel));
+        return new User(usuarioModel.getEmail(), usuarioModel.getSenha(), getAuthorities(usuarioModel));
     }
 
-/** Retorna coleção dos nomes das permissões do usuario autenticado */
+    /** Retorna coleção dos nomes das permissões do usuario autenticado */
     private Collection<? extends GrantedAuthority> getAuthorities(UsuarioModel usuarioModel){
+        log.info(">>> Carregando a coleção de permissões do usuário [getAuthorities] :: " + usuarioModel.getNome());
 
         return usuarioModel.getGrupos().stream()
             .flatMap(grupoModel -> grupoModel.getPermissoes().stream())

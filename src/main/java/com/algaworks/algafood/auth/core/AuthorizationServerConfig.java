@@ -8,6 +8,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
@@ -25,18 +26,32 @@ import org.springframework.security.web.SecurityFilterChain;
 import java.time.Duration;
 import java.util.Arrays;
 
-/**  Essa classe é responsável por configurar o servidor de autorização OAuth2, de como os clientes se autenticam e obtêm tokens de acesso.  */
-//@EnableAuthorizationServer // Habilita a configuração do servidor de autorização OAuth2.
+/**  Essa classe é responsável por configurar o servidor de autorização OAuth2, de como os clientes se autenticam e
+ obtêm tokens de acesso.  */
 @Configuration
 public class AuthorizationServerConfig {
 
 
-    @Bean // Aplica as configurações padrão de segurança do OAuth2 ao HttpSecurity
+    @Bean // Aplica as configurações de segurança do OAuth2 ao HttpSecurity
     @Order(Ordered.HIGHEST_PRECEDENCE)
     public SecurityFilterChain authFilterChain(HttpSecurity http) throws Exception {
         OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
 
-        return http.build();
+        // Para personalizar a página de login implementada no WebMvcSecurityConfig
+        return http.formLogin(customizer -> customizer.loginPage("/login")).build();
+    }
+
+
+    @Bean // Define uma SecurityFilterChain default
+    public SecurityFilterChain defaultFilterChain(HttpSecurity httpSecurity) throws Exception {
+
+        httpSecurity
+            .authorizeRequests().antMatchers("/oauth2/**").authenticated() // Exige autenticação para todas as requisições da aplicação exceto os endpoints /oauth2/**.
+            .and()
+            .csrf().disable(); // Desativa proteção contra CSRF (Cross-Site Request Forgery) porque o ataque de CSRF geralmente depende de um navegador do usuário e de cookies de autenticação
+
+        // Para personalizar a página de login implementada no WebMvcSecurityConfig
+        return httpSecurity.formLogin(customizer -> customizer.loginPage("/login")).build();
     }
 
 
@@ -57,14 +72,16 @@ public class AuthorizationServerConfig {
 
         // armazena em memória
         return new InMemoryRegisteredClientRepository(
-            Arrays.asList(algafoodClientCredentialsTokenOpaco, algafoodClientCredentialsTokenJWT));
+            Arrays.asList(
+                algafoodClientCredentialsTokenOpaco,
+                algafoodClientCredentialsTokenJWT,
+                algafoodAuthorizationCodeTokenJWT));
     }
 
-    @Bean
-    // Configura serviço de autorização OAuth2 baseado em JDBC para armazenar e gerenciar autorizações de clientes.
+    @Bean // Configura serviço de autorização OAuth2 baseado em JDBC para armazenar e gerenciar autorizações de clientes.
     public OAuth2AuthorizationService oAuth2AuthorizationService(JdbcOperations jdbcOperations, RegisteredClientRepository registeredClientRepository) {
         return new JdbcOAuth2AuthorizationService(jdbcOperations, registeredClientRepository); // sem usar a implementaçã customizada
-//        return new CustomOAuth2AuthorizationService(jdbcOperations, registeredClientRepository);
+    // return new CustomOAuth2AuthorizationService(jdbcOperations, registeredClientRepository);
     }
 
     private static RegisteredClient clienteClientCredentialsUsandoTokenOpaco(PasswordEncoder passwordEncoder) {
@@ -102,13 +119,14 @@ public class AuthorizationServerConfig {
             .build();
     }
 
+
     private static RegisteredClient clienteAuthorizationCodeUsandoTokenJWT(PasswordEncoder passwordEncoder) {
         return RegisteredClient
-            .withId("2")
+            .withId("3")
             .clientId("algafood-web-authorization-code-token-jwt")
             .clientSecret(passwordEncoder.encode("web123"))
             .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-            .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE) // fluxo client credentials
+            .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE) // fluxo authorization code
             .scope("READ")
             .scope("WRITE")
 
@@ -117,16 +135,20 @@ public class AuthorizationServerConfig {
                 .accessTokenTimeToLive(Duration.ofMinutes(30))
                 .build())
 
-            .redirectUri("http://localhost:8082/authorizated") // Endpoint não existe
+            .redirectUri("http://127.0.0.1:8080/authorizated") // Endpoint não existe, usado como exemplo
+            .redirectUri("http://127.0.0.1:8080/swagger-ui/oauth2-redirect.html") // Endpoint do Swagger caso queira testar dentro da documentação Swagger
             .clientSettings(ClientSettings.builder()
-                .requireAuthorizationConsent(true)
+                .requireAuthorizationConsent(false) // Não obrigatório aparecer a tela de consentimento
                 .build())
 
             .build();
     }
 
 
-
+    @Bean // Define um bean de PasswordEncoder que usa BCryptPasswordEncoder para codificar senhas.
+    public PasswordEncoder passwordEncoder(){
+        return new BCryptPasswordEncoder();
+    }
 }
 
 
