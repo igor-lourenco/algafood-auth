@@ -15,7 +15,7 @@ import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2TokenFormat;
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
@@ -24,7 +24,6 @@ import org.springframework.security.oauth2.server.authorization.config.TokenSett
 import org.springframework.security.web.SecurityFilterChain;
 
 import java.time.Duration;
-import java.util.Arrays;
 
 /**  Essa classe é responsável por configurar o servidor de autorização OAuth2, de como os clientes se autenticam e
  obtêm tokens de acesso.  */
@@ -63,7 +62,7 @@ public class AuthorizationServerConfig {
     }
 
     @Bean // Regista cliente OAuth2
-    public RegisteredClientRepository registeredClientRepository(PasswordEncoder passwordEncoder) {
+    public RegisteredClientRepository registeredClientRepository(PasswordEncoder passwordEncoder, JdbcOperations jdbcOperations) {
 
         RegisteredClient algafoodClientCredentialsTokenOpaco = clienteClientCredentialsUsandoTokenOpaco(passwordEncoder);
         RegisteredClient algafoodClientCredentialsTokenJWT = clienteClientCredentialsUsandoTokenJWT(passwordEncoder);
@@ -71,16 +70,26 @@ public class AuthorizationServerConfig {
 
 
         // armazena em memória
-        return new InMemoryRegisteredClientRepository(
-            Arrays.asList(
-                algafoodClientCredentialsTokenOpaco,
-                algafoodClientCredentialsTokenJWT,
-                algafoodAuthorizationCodeTokenJWT));
+//        return new InMemoryRegisteredClientRepository(
+//            Arrays.asList(
+//                algafoodClientCredentialsTokenOpaco,
+//                algafoodClientCredentialsTokenJWT,
+//                algafoodAuthorizationCodeTokenJWT));
+
+        JdbcRegisteredClientRepository registeredClientRepository = new JdbcRegisteredClientRepository(jdbcOperations);
+
+//     Obs: Inserção dos clientes, se já foi inserido não faz nada
+       registeredClientRepository.save(algafoodClientCredentialsTokenOpaco);
+       registeredClientRepository.save(algafoodClientCredentialsTokenJWT);
+       registeredClientRepository.save(algafoodAuthorizationCodeTokenJWT);
+
+       return registeredClientRepository;
+
     }
 
     @Bean // Configura serviço de autorização OAuth2 baseado em JDBC para armazenar e gerenciar autorizações de clientes.
     public OAuth2AuthorizationService oAuth2AuthorizationService(JdbcOperations jdbcOperations, RegisteredClientRepository registeredClientRepository) {
-        return new JdbcOAuth2AuthorizationService(jdbcOperations, registeredClientRepository); // sem usar a implementaçã customizada
+        return new JdbcOAuth2AuthorizationService(jdbcOperations, registeredClientRepository); // sem usar a implementação customizada
     // return new CustomOAuth2AuthorizationService(jdbcOperations, registeredClientRepository);
     }
 
