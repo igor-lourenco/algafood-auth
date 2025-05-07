@@ -127,12 +127,16 @@ public class AuthorizationServerConfig {
             .clientSecret(passwordEncoder.encode("web123"))
             .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
             .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE) // fluxo authorization code
+            .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN) // implementa o refresh token para esse cliente
+
             .scope("READ")
             .scope("WRITE")
 
             .tokenSettings(TokenSettings.builder()
                 .accessTokenFormat(OAuth2TokenFormat.SELF_CONTAINED) // Token JWT
                 .accessTokenTimeToLive(Duration.ofMinutes(30))
+                .reuseRefreshTokens(false) // refresh token não pode ser reutilizado
+                .refreshTokenTimeToLive(Duration.ofDays(1)) // tempo de vida do refresh token
                 .build())
 
             .redirectUri("http://127.0.0.1:8080/authorizated") // Endpoint não existe, usado como exemplo

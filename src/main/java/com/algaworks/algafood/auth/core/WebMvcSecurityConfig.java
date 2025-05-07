@@ -5,11 +5,11 @@ import org.springframework.core.Ordered;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-///**  Essa classe configura a segurança da aplicação web em geral, definindo usuários, codificando senhas
-//  com BCrypt e fornecendo um gerenciador de autenticação.  */
-//@EnableWebSecurity  //  Habilita a configuração de segurança da web no Spring Security.
+/** Essa classe de configuração facilita a configuração de rotas específicas no Spring MVC.
+ *  E foi implementado o método addViewControllers da interface WebMvcConfigurer que associa diretamente a rota '/login'
+ *  a uma página de visualização */
 @Configuration
-public class WebSecurityConfig  implements WebMvcConfigurer {
+public class WebMvcSecurityConfig implements WebMvcConfigurer {
 
 
     // Permite registrar controladores de visualização (view controllers) sem lógica adicional
