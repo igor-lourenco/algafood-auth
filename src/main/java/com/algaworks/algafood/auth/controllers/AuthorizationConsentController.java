@@ -30,7 +30,7 @@ public class AuthorizationConsentController {
     @GetMapping("/oauth2/consent")
     public String consent(
         Principal principal, // usuário autenticado
-        Model model,
+        Model model,  // Serve para adiciona atributos para serem usados na exibição da página.
         @RequestParam(OAuth2ParameterNames.CLIENT_ID) String clientId,
         @RequestParam(OAuth2ParameterNames.SCOPE) String scope,
         @RequestParam(OAuth2ParameterNames.STATE) String state

@@ -1,6 +1,8 @@
 package com.algaworks.algafood.auth.core;
 
 import com.algaworks.algafood.auth.properties.AlgafoodSecurityProperties;
+import com.algaworks.algafood.auth.services.JdbcOAuth2AuthorizationQueryService;
+import com.algaworks.algafood.auth.services.OAuth2AuthorizationQueryService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
@@ -14,7 +16,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2TokenFormat;
-import org.springframework.security.oauth2.server.authorization.*;
+import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationConsentService;
+import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
@@ -145,6 +150,7 @@ public class AuthorizationServerConfig {
         return RegisteredClient
             .withId("3")
             .clientId("algafood-web-authorization-code-token-jwt")
+            .clientName("algafood web authorization code token jwt")
             .clientSecret(passwordEncoder.encode("web123"))
             .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
             .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE) // fluxo authorization code
@@ -174,6 +180,14 @@ public class AuthorizationServerConfig {
     public OAuth2AuthorizationConsentService consentService(JdbcOperations jdbcOperations, RegisteredClientRepository  registeredClientRepository){
 //        return new InMemoryOAuth2AuthorizationConsentService();
         return new JdbcOAuth2AuthorizationConsentService(jdbcOperations, registeredClientRepository);
+    }
+
+
+    //  Configura o nosso próprio bean customizado para consultar as autorizações OAuth2 armazenadas em um banco de dados usando JDBC.
+//  Obs: Como o JdbcOperations já existe no contexto como um bean, automaticamente o Spring passa uma instância válida no parâmetro.
+    @Bean
+    public OAuth2AuthorizationQueryService oAuth2AuthorizationQueryService(JdbcOperations jdbcOperations){
+        return new JdbcOAuth2AuthorizationQueryService(jdbcOperations);
     }
 
     @Bean // Define um bean de PasswordEncoder que usa BCryptPasswordEncoder para codificar senhas.
