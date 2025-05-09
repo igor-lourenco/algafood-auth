@@ -186,8 +186,8 @@ public class AuthorizationServerConfig {
     //  Configura o nosso próprio bean customizado para consultar as autorizações OAuth2 armazenadas em um banco de dados usando JDBC.
 //  Obs: Como o JdbcOperations já existe no contexto como um bean, automaticamente o Spring passa uma instância válida no parâmetro.
     @Bean
-    public OAuth2AuthorizationQueryService oAuth2AuthorizationQueryService(JdbcOperations jdbcOperations){
-        return new JdbcOAuth2AuthorizationQueryService(jdbcOperations);
+    public OAuth2AuthorizationQueryService oAuth2AuthorizationQueryService(JdbcOperations jdbcOperations, RegisteredClientRepository repository){
+        return new JdbcOAuth2AuthorizationQueryService(jdbcOperations, repository);
     }
 
     @Bean // Define um bean de PasswordEncoder que usa BCryptPasswordEncoder para codificar senhas.
