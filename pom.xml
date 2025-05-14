@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.7.1</version>
+		<version>3.0.0</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.algaworks</groupId>
@@ -28,6 +28,8 @@
 	</scm>
 	<properties>
 		<java.version>17</java.version>
+		<spring.nimbusds.version>6.21.2</spring.nimbusds.version>
+		<spring.authorizationserver.version>1.0.0</spring.authorizationserver.version>
 	</properties>
 	<dependencies>
 
@@ -44,7 +46,7 @@
 		<dependency>
 			<groupId>org.springframework.security</groupId>
 			<artifactId>spring-security-oauth2-authorization-server</artifactId>
-			<version>0.3.1</version>
+			<version>${spring.authorizationserver.version}</version>
 		</dependency>
 
 		<dependency>
@@ -55,7 +57,7 @@
 		<dependency>
 			<groupId>com.nimbusds</groupId>
 			<artifactId>oauth2-oidc-sdk</artifactId>
-			<version>10.4</version>
+			<version>${spring.nimbusds.version}</version>
 		</dependency>
 
 		<dependency>
@@ -73,26 +75,6 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-
-		<!--  Spring Security OAuth2 com Java 11+ lança exception:
-				Caused by: java.lang.ClassNotFoundException: javax.xml.bind.JAXBException
-			Em um projeto com Spring Boot, adicione as dependências abaixo para resolver o problema.
-			Leia também: https://stackoverflow.com/questions/52502189/java-11-package-javax-xml-bind-does-not-exist  -->
-<!--		<dependency>-->
-<!--			<groupId>javax.xml.bind</groupId>-->
-<!--			<artifactId>jaxb-api</artifactId>-->
-<!--		</dependency>-->
-<!--		<dependency>-->
-<!--			<groupId>com.sun.xml.bind</groupId>-->
-<!--			<artifactId>jaxb-core</artifactId>-->
-<!--			<version>2.3.0.1</version>-->
-<!--		</dependency>-->
-<!--		<dependency>-->
-<!--			<groupId>com.sun.xml.bind</groupId>-->
-<!--			<artifactId>jaxb-impl</artifactId>-->
-<!--			<version>${javax-jaxb.version}</version>-->
-<!--		</dependency>-->
-
 
 		<!-- DEPENDENCIA PARA BANCO DA DADOS NOSQL REDIS	-->
 		<dependency>
@@ -143,8 +125,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
                 <configuration>
-                    <source>11</source>
-                    <target>11</target>
+                    <source>17</source>
+                    <target>17</target>
                     <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>

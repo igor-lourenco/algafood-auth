@@ -8,14 +8,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.jdbc.core.JdbcOperations;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.ExpressionUrlAuthorizationConfigurer;
-import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
-import org.springframework.security.oauth2.core.OAuth2TokenFormat;
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
@@ -23,16 +21,21 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
-import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
-import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
-import org.springframework.security.oauth2.server.authorization.config.TokenSettings;
+import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
+import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
+import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
+import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
 import java.time.Duration;
 
-/**  Essa classe é responsável por configurar o servidor de autorização OAuth2, de como os clientes se autenticam e
- obtêm tokens de acesso.  */
+/**
+ * Essa classe é responsável por configurar o servidor de autorização OAuth2, de como os clientes se autenticam e
+ * obtêm tokens de acesso.
+ */
 @Configuration
 public class AuthorizationServerConfig {
 
@@ -40,18 +43,23 @@ public class AuthorizationServerConfig {
     @Bean // Aplica as configurações de segurança do OAuth2 ao HttpSecurity
     @Order(Ordered.HIGHEST_PRECEDENCE)
     public SecurityFilterChain authFilterChain(HttpSecurity http) throws Exception {
-        OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
+        OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
 
         authorizationServerConfigurer.authorizationEndpoint(customizer ->
             customizer.consentPage("/oauth2/consent")); // página de consentimento
 
         RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
 
-        http.requestMatcher(endpointsMatcher).authorizeRequests((authorizeRequests) -> {
-            ((ExpressionUrlAuthorizationConfigurer.AuthorizedUrl) authorizeRequests.anyRequest()).authenticated();
-        }).csrf((csrf) -> {
-            csrf.ignoringRequestMatchers(new RequestMatcher[]{endpointsMatcher});
-        }).apply(authorizationServerConfigurer);
+        http.securityMatcher(endpointsMatcher)
+            .authorizeHttpRequests((authorizeRequests) -> {
+                authorizeRequests.anyRequest().authenticated();
+            }).csrf((csrf) -> {
+                csrf.ignoringRequestMatchers(new RequestMatcher[]{endpointsMatcher});
+            })
+            .formLogin(Customizer.withDefaults())
+            .exceptionHandling(httpSecurityExceptionHandlingConfigurer -> {
+                httpSecurityExceptionHandlingConfigurer.authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"));
+            }).apply(authorizationServerConfigurer);
 
         // Para personalizar a página de login implementada no WebMvcSecurityConfig
         return http.formLogin(customizer -> customizer.loginPage("/login")).build();
@@ -61,19 +69,21 @@ public class AuthorizationServerConfig {
     @Bean // Define uma SecurityFilterChain default
     public SecurityFilterChain defaultFilterChain(HttpSecurity httpSecurity) throws Exception {
 
-        httpSecurity
-            .authorizeRequests().antMatchers("/oauth2/**").authenticated() // Exige autenticação para todas as requisições da aplicação exceto os endpoints /oauth2/**.
-            .and()
-            .csrf().disable(); // Desativa proteção contra CSRF (Cross-Site Request Forgery) porque o ataque de CSRF geralmente depende de um navegador do usuário e de cookies de autenticação
+        httpSecurity.formLogin(Customizer.withDefaults())
+//            .authorizeHttpRequests(authorization -> authorization
+//                .securityMatchers("/oauth2/**").authenticated() // Exige autenticação para todas as requisições da aplicação exceto os endpoints /oauth2/**.
+            .csrf().disable().cors();
+//            and()
+//            .csrf().disable(); // Desativa proteção contra CSRF (Cross-Site Request Forgery) porque o ataque de CSRF geralmente depende de um navegador do usuário e de cookies de autenticação
 
         // Para personalizar a página de login implementada no WebMvcSecurityConfig
-        return httpSecurity.formLogin(customizer -> customizer.loginPage("/login")).build();
+        return httpSecurity.build();
     }
 
 
     @Bean // Define as configurações do provedor de identidade, incluindo a URL do emissor (issuer)
-    public ProviderSettings providerSettings(AlgafoodSecurityProperties properties) {
-        return ProviderSettings.builder()
+    public AuthorizationServerSettings authorizationServerSettings(AlgafoodSecurityProperties properties) {
+        return AuthorizationServerSettings.builder()
             .issuer(properties.getProviderUrl())
             .build();
     }
@@ -96,18 +106,19 @@ public class AuthorizationServerConfig {
         JdbcRegisteredClientRepository registeredClientRepository = new JdbcRegisteredClientRepository(jdbcOperations);
 
 //     Obs: Inserção dos clientes, se já foi inserido não faz nada
-       registeredClientRepository.save(algafoodClientCredentialsTokenOpaco);
-       registeredClientRepository.save(algafoodClientCredentialsTokenJWT);
-       registeredClientRepository.save(algafoodAuthorizationCodeTokenJWT);
+        registeredClientRepository.save(algafoodClientCredentialsTokenOpaco);
+        registeredClientRepository.save(algafoodClientCredentialsTokenJWT);
+        registeredClientRepository.save(algafoodAuthorizationCodeTokenJWT);
 
-       return registeredClientRepository;
+        return registeredClientRepository;
 
     }
 
-    @Bean // Configura serviço de autorização OAuth2 baseado em JDBC para armazenar e gerenciar autorizações de clientes.
+    @Bean
+    // Configura serviço de autorização OAuth2 baseado em JDBC para armazenar e gerenciar autorizações de clientes.
     public OAuth2AuthorizationService oAuth2AuthorizationService(JdbcOperations jdbcOperations, RegisteredClientRepository registeredClientRepository) {
         return new JdbcOAuth2AuthorizationService(jdbcOperations, registeredClientRepository); // sem usar a implementação customizada
-    // return new CustomOAuth2AuthorizationService(jdbcOperations, registeredClientRepository);
+        // return new CustomOAuth2AuthorizationService(jdbcOperations, registeredClientRepository);
     }
 
     private static RegisteredClient clienteClientCredentialsUsandoTokenOpaco(PasswordEncoder passwordEncoder) {
@@ -176,8 +187,9 @@ public class AuthorizationServerConfig {
     }
 
 
-    @Bean  // Configura serviço de autorização OAuth2 baseado em JDBC para armazenar as autorizações de consentimento dos clientes autorizados pelos usuarios.
-    public OAuth2AuthorizationConsentService consentService(JdbcOperations jdbcOperations, RegisteredClientRepository  registeredClientRepository){
+    @Bean
+    // Configura serviço de autorização OAuth2 baseado em JDBC para armazenar as autorizações de consentimento dos clientes autorizados pelos usuarios.
+    public OAuth2AuthorizationConsentService consentService(JdbcOperations jdbcOperations, RegisteredClientRepository registeredClientRepository) {
 //        return new InMemoryOAuth2AuthorizationConsentService();
         return new JdbcOAuth2AuthorizationConsentService(jdbcOperations, registeredClientRepository);
     }
@@ -186,12 +198,12 @@ public class AuthorizationServerConfig {
     //  Configura o nosso próprio bean customizado para consultar as autorizações OAuth2 armazenadas em um banco de dados usando JDBC.
 //  Obs: Como o JdbcOperations já existe no contexto como um bean, automaticamente o Spring passa uma instância válida no parâmetro.
     @Bean
-    public OAuth2AuthorizationQueryService oAuth2AuthorizationQueryService(JdbcOperations jdbcOperations, RegisteredClientRepository repository){
+    public OAuth2AuthorizationQueryService oAuth2AuthorizationQueryService(JdbcOperations jdbcOperations, RegisteredClientRepository repository) {
         return new JdbcOAuth2AuthorizationQueryService(jdbcOperations, repository);
     }
 
     @Bean // Define um bean de PasswordEncoder que usa BCryptPasswordEncoder para codificar senhas.
-    public PasswordEncoder passwordEncoder(){
+    public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 }
