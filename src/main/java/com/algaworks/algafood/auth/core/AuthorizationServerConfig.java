@@ -1,5 +1,8 @@
 package com.algaworks.algafood.auth.core;
 
+import com.algaworks.algafood.auth.utils.OAuth2ConfigurerUtils;
+import com.algaworks.algafood.auth.core.utils.OAuth2PasswordGrantAuthenticationConverter;
+import com.algaworks.algafood.auth.core.utils.OAuth2PasswordGrantAuthenticationProvider;
 import com.algaworks.algafood.auth.properties.AlgafoodSecurityProperties;
 import com.algaworks.algafood.auth.services.JdbcOAuth2AuthorizationQueryService;
 import com.algaworks.algafood.auth.services.OAuth2AuthorizationQueryService;
@@ -10,6 +13,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -26,6 +30,7 @@ import org.springframework.security.oauth2.server.authorization.settings.Authori
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -42,8 +47,24 @@ public class AuthorizationServerConfig {
 
     @Bean // Aplica as configurações de segurança do OAuth2 ao HttpSecurity
     @Order(Ordered.HIGHEST_PRECEDENCE)
-    public SecurityFilterChain authFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain authFilterChain(HttpSecurity http
+        , UserDetailsService userDetailsService
+        , PasswordEncoder passwordEncoder
+        , OAuth2AuthorizationService authorizationService
+        ) throws Exception {
         OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
+
+
+
+//      https://gist.github.com/akuma8/2eb244b796f3d3506956207997fb290f
+//      Password Grant Authentication Provider registration
+        OAuth2TokenGenerator<?> tokenGenerator = OAuth2ConfigurerUtils.getTokenGenerator(http);
+
+        authorizationServerConfigurer.tokenEndpoint(tokenEndpoint ->
+            tokenEndpoint.accessTokenRequestConverter(new OAuth2PasswordGrantAuthenticationConverter())
+                .authenticationProvider(new OAuth2PasswordGrantAuthenticationProvider(userDetailsService, passwordEncoder, authorizationService, tokenGenerator))
+        );
+
 
         authorizationServerConfigurer.authorizationEndpoint(customizer ->
             customizer.consentPage("/oauth2/consent")); // página de consentimento
@@ -60,6 +81,7 @@ public class AuthorizationServerConfig {
             .exceptionHandling(httpSecurityExceptionHandlingConfigurer -> {
                 httpSecurityExceptionHandlingConfigurer.authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"));
             }).apply(authorizationServerConfigurer);
+
 
         // Para personalizar a página de login implementada no WebMvcSecurityConfig
         return http.formLogin(customizer -> customizer.loginPage("/login")).build();
@@ -94,6 +116,7 @@ public class AuthorizationServerConfig {
         RegisteredClient algafoodClientCredentialsTokenOpaco = clienteClientCredentialsUsandoTokenOpaco(passwordEncoder);
         RegisteredClient algafoodClientCredentialsTokenJWT = clienteClientCredentialsUsandoTokenJWT(passwordEncoder);
         RegisteredClient algafoodAuthorizationCodeTokenJWT = clienteAuthorizationCodeUsandoTokenJWT(passwordEncoder);
+        RegisteredClient algafoodPasswordTokenJWT = clientePasswordUsandoTokenJWT(passwordEncoder); // password flow depreciado
 
 
         // armazena em memória
@@ -109,6 +132,7 @@ public class AuthorizationServerConfig {
         registeredClientRepository.save(algafoodClientCredentialsTokenOpaco);
         registeredClientRepository.save(algafoodClientCredentialsTokenJWT);
         registeredClientRepository.save(algafoodAuthorizationCodeTokenJWT);
+        registeredClientRepository.save(algafoodPasswordTokenJWT);
 
         return registeredClientRepository;
 
@@ -125,6 +149,7 @@ public class AuthorizationServerConfig {
         return RegisteredClient
             .withId("1")
             .clientId("algafood-web-client-credentials-token-opaco")
+            .clientName("Algafood web client_credentials token opaco")
             .clientSecret(passwordEncoder.encode("web123"))
             .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
             .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS) // fluxo client credentials
@@ -143,14 +168,19 @@ public class AuthorizationServerConfig {
         return RegisteredClient
             .withId("2")
             .clientId("algafood-web-client-credentials-token-jwt")
+            .clientName("Algafood web client_credentials token jwt")
             .clientSecret(passwordEncoder.encode("web123"))
             .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
             .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS) // fluxo client credentials
+            .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN) // implementa o refresh token para esse cliente
+
             .scope("READ")
 
             .tokenSettings(TokenSettings.builder()
                 .accessTokenFormat(OAuth2TokenFormat.SELF_CONTAINED) // Token JWT
                 .accessTokenTimeToLive(Duration.ofMinutes(30))
+                .reuseRefreshTokens(false) // refresh token não pode ser reutilizado
+                .refreshTokenTimeToLive(Duration.ofDays(1)) // tempo de vida do refresh token
                 .build())
 
             .build();
@@ -161,7 +191,7 @@ public class AuthorizationServerConfig {
         return RegisteredClient
             .withId("3")
             .clientId("algafood-web-authorization-code-token-jwt")
-            .clientName("algafood web authorization code token jwt")
+            .clientName("Algafood web authorization_code token jwt")
             .clientSecret(passwordEncoder.encode("web123"))
             .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
             .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE) // fluxo authorization code
@@ -186,6 +216,30 @@ public class AuthorizationServerConfig {
             .build();
     }
 
+
+    // O Fluxo Passowrd Flow foi depreciado pelo OAuth 2.1
+    private static RegisteredClient clientePasswordUsandoTokenJWT(PasswordEncoder passwordEncoder) {
+        return RegisteredClient
+            .withId("4")
+            .clientId("algafood-web-password-token-jwt")
+            .clientName("Algafood web password_flow token jwt")
+            .clientSecret(passwordEncoder.encode("web123"))
+            .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+            .authorizationGrantType(AuthorizationGrantType.PASSWORD) // fluxo password
+            .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN) // implementa o refresh token para esse cliente
+
+            .scope("READ")
+            .scope("WRITE")
+
+            .tokenSettings(TokenSettings.builder()
+                .accessTokenFormat(OAuth2TokenFormat.SELF_CONTAINED) // Token JWT
+                .accessTokenTimeToLive(Duration.ofMinutes(30))
+                .reuseRefreshTokens(false) // refresh token não pode ser reutilizado
+                .refreshTokenTimeToLive(Duration.ofDays(1)) // tempo de vida do refresh token
+                .build())
+
+            .build();
+    }
 
     @Bean
     // Configura serviço de autorização OAuth2 baseado em JDBC para armazenar as autorizações de consentimento dos clientes autorizados pelos usuarios.

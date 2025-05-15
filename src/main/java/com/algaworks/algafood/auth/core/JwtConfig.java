@@ -1,5 +1,6 @@
 package com.algaworks.algafood.auth.core;
 
+import com.algaworks.algafood.auth.models.OAuth2PasswordGrantAuthenticationTokenModel;
 import com.algaworks.algafood.auth.models.UsuarioModel;
 import com.algaworks.algafood.auth.properties.JwtKeyStoreProperties;
 import com.algaworks.algafood.auth.repositories.UsuarioRepository;
@@ -70,6 +71,29 @@ public class JwtConfig {
 
                 log.info(">>> Adicionando claim customizada authorities: {}", authorities);
                 context.getClaims().claim("authorities", authorities); // adiciona lista de authorities do usuario no token
+            }
+
+            else if(authentication instanceof OAuth2PasswordGrantAuthenticationTokenModel){
+                log.info("Usuário usando o grant_type: Password Flow");
+                OAuth2PasswordGrantAuthenticationTokenModel userDetail = (OAuth2PasswordGrantAuthenticationTokenModel) authentication;
+
+                log.info(">>> Buscando no banco de dados o username: {}", userDetail.getUsername());
+                UsuarioModel user = userRepository.findByEmail(userDetail.getUsername()).orElseThrow();
+
+                Set<String> authorities = new HashSet<>();
+                for (GrantedAuthority authority : userDetail.getAuthorities()) {
+                    authorities.add(authority.getAuthority());
+                }
+
+                log.info(">>> Adicionando claim customizada user_id: {}", user.getId().toString());
+                context.getClaims().claim("user_id", user.getId().toString()); // adiciona o id do usuario no token
+
+                log.info(">>> Adicionando claim customizada nome_usuario: {}", user.getNome());
+                context.getClaims().claim("nome_usuario", user.getNome()); // adiciona o id do usuario no token
+
+                log.info(">>> Adicionando claim customizada authorities: {}", authorities);
+                context.getClaims().claim("authorities", authorities); // adiciona lista de authorities do usuario no token
+
             }
         };
     }
