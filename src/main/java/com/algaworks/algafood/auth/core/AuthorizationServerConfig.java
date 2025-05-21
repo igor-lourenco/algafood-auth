@@ -1,8 +1,6 @@
 package com.algaworks.algafood.auth.core;
 
 import com.algaworks.algafood.auth.utils.OAuth2ConfigurerUtils;
-import com.algaworks.algafood.auth.core.utils.OAuth2PasswordGrantAuthenticationConverter;
-import com.algaworks.algafood.auth.core.utils.OAuth2PasswordGrantAuthenticationProvider;
 import com.algaworks.algafood.auth.properties.AlgafoodSecurityProperties;
 import com.algaworks.algafood.auth.services.JdbcOAuth2AuthorizationQueryService;
 import com.algaworks.algafood.auth.services.OAuth2AuthorizationQueryService;

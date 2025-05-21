@@ -11,7 +11,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import static com.algaworks.algafood.auth.core.utils.OAuth2PasswordGrantAuthenticationConverter.PASSWORD_GRANT_TYPE;
+import static com.algaworks.algafood.auth.core.OAuth2PasswordGrantAuthenticationConverter.PASSWORD_GRANT_TYPE;
 
 /** Token de autenticação para a concessão de credenciais de senha do proprietário do recurso OAuth 2.0. */
 @Getter

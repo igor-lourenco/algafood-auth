@@ -1,4 +1,4 @@
-package com.algaworks.algafood.auth.core.utils;
+package com.algaworks.algafood.auth.core;
 
 
 import com.algaworks.algafood.auth.models.OAuth2PasswordGrantAuthenticationTokenModel;
@@ -27,13 +27,14 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.algaworks.algafood.auth.core.OAuth2PasswordGrantAuthenticationConverter.PASSWORD_GRANT_TYPE;
 import static com.algaworks.algafood.auth.utils.OAuth2EndpointUtils.ACCESS_TOKEN_REQUEST_ERROR_URI;
-import static com.algaworks.algafood.auth.core.utils.OAuth2PasswordGrantAuthenticationConverter.PASSWORD_GRANT_TYPE;
 
 
 /** {@link AuthenticationProvider} implementation for the OAuth 2.0 Resource Owner Password Credentials Grant. */
 @Log4j2
 public class OAuth2PasswordGrantAuthenticationProvider implements AuthenticationProvider {
+    private static final OAuth2TokenType AUTHORIZATION_CODE_TOKEN_TYPE = new OAuth2TokenType("password");
     private final UserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
     private final OAuth2AuthorizationService authorizationService;
@@ -87,36 +88,8 @@ public class OAuth2PasswordGrantAuthenticationProvider implements Authentication
             throw new OAuth2AuthenticationException("Invalid resource owner credentials");
         }
 
-
+        log.info("Adicionando as lista de Authorities");
         passwordGrantAuthenticationToken.getAuthorities().addAll(userDetails.getAuthorities());
-
-        log.info("Gerando token de acesso");
-        OAuth2TokenContext tokenContext = DefaultOAuth2TokenContext.builder()
-            .registeredClient(registeredClient)
-            .principal(passwordGrantAuthenticationToken)
-            .authorizationServerContext(AuthorizationServerContextHolder.getContext())
-            .authorizedScopes(authorizedScopes)
-            .tokenType(OAuth2TokenType.ACCESS_TOKEN)
-            .authorizationGrantType(PASSWORD_GRANT_TYPE)
-            .authorizationGrant(passwordGrantAuthenticationToken)
-            .build();
-
-        OAuth2Token generatedAccessToken = this.tokenGenerator.generate(tokenContext);
-        if (generatedAccessToken == null) {
-            OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR,
-                "The token generator failed to generate the access token.", ACCESS_TOKEN_REQUEST_ERROR_URI);
-            throw new OAuth2AuthenticationException(error);
-        }
-
-        OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
-            generatedAccessToken.getTokenValue(), generatedAccessToken.getIssuedAt(),
-            generatedAccessToken.getExpiresAt(), tokenContext.getAuthorizedScopes());
-
-
-
-        if (log.isDebugEnabled()) {
-            log.debug("Creating authorization");
-        }
 
         Map<String, Object> tokenMetadata = new HashMap<>();
         tokenMetadata.put("username", userDetails.getUsername());
@@ -125,19 +98,57 @@ public class OAuth2PasswordGrantAuthenticationProvider implements Authentication
             tokenMetadata.put("scopes", authorizedScopes);
         }
 
+        log.info("Gerando token de acesso");
+
+        DefaultOAuth2TokenContext.Builder tokenContextBuilder = DefaultOAuth2TokenContext.builder()
+            .registeredClient(registeredClient)
+            .principal(passwordGrantAuthenticationToken)
+            .authorizationServerContext(AuthorizationServerContextHolder.getContext())
+            .authorizedScopes(authorizedScopes)
+            .tokenType(OAuth2TokenType.ACCESS_TOKEN)
+            .authorizationGrantType(PASSWORD_GRANT_TYPE);
+
+        OAuth2TokenContext tokenContext =((DefaultOAuth2TokenContext.Builder) tokenContextBuilder.tokenType(OAuth2TokenType.ACCESS_TOKEN)).build();
+
+        OAuth2Token generatedAccessToken = this.tokenGenerator.generate(tokenContext);
+        if (generatedAccessToken == null) {
+            log.error("O gerador de tokens falhou ao gerar o token de acesso");
+            OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR,"The token generator failed to generate the access token.", ACCESS_TOKEN_REQUEST_ERROR_URI);
+            throw new OAuth2AuthenticationException(error);
+        }
+
+        OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
+            generatedAccessToken.getTokenValue(), generatedAccessToken.getIssuedAt(),
+            generatedAccessToken.getExpiresAt(), tokenContext.getAuthorizedScopes());
+
         OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(registeredClient)
             .principalName(userDetails.getUsername())
             .authorizationGrantType(PASSWORD_GRANT_TYPE)
             .token(accessToken, (metadata) -> metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, tokenMetadata))
             .build();
 
-        if (log.isDebugEnabled()) {
-            log.debug("Saving authorization");
+        log.info("Gerando refresh token");
+
+        OAuth2Authorization.Builder authorizationBuilder = OAuth2Authorization.from(authorization);
+        OAuth2RefreshToken refreshToken = null;
+        if (registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.REFRESH_TOKEN) && !clientPrincipal.getClientAuthenticationMethod().equals(ClientAuthenticationMethod.NONE)) {
+            tokenContext = ((DefaultOAuth2TokenContext.Builder)tokenContextBuilder.tokenType(OAuth2TokenType.REFRESH_TOKEN)).build();
+            OAuth2Token generatedRefreshToken = this.tokenGenerator.generate(tokenContext);
+            if (!(generatedRefreshToken instanceof OAuth2RefreshToken)) {
+                log.error("O gerador de tokens falhou ao gerar o refresh token");
+                OAuth2Error error = new OAuth2Error("server_error", "The token generator failed to generate the refresh token.", "https://datatracker.ietf.org/doc/html/rfc6749#section-5.2");
+                throw new OAuth2AuthenticationException(error);
+            }
+
+            refreshToken = (OAuth2RefreshToken)generatedRefreshToken;
+            authorizationBuilder.refreshToken(refreshToken);
         }
 
+        log.info("Salvando authorization");
+        authorization = authorizationBuilder.build();
         this.authorizationService.save(authorization);
 
-        return new OAuth2AccessTokenAuthenticationToken(registeredClient, clientPrincipal, accessToken);
+        return new OAuth2AccessTokenAuthenticationToken(registeredClient, clientPrincipal, accessToken, refreshToken);
     }
 
     @Override

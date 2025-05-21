@@ -1,4 +1,4 @@
-package com.algaworks.algafood.auth.core.utils;
+package com.algaworks.algafood.auth.core;
 
 import com.algaworks.algafood.auth.models.OAuth2PasswordGrantAuthenticationTokenModel;
 import com.algaworks.algafood.auth.utils.OAuth2EndpointUtils;
