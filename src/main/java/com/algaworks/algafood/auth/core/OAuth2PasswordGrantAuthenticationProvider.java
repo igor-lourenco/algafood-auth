@@ -2,7 +2,6 @@ package com.algaworks.algafood.auth.core;
 
 
 import com.algaworks.algafood.auth.models.OAuth2PasswordGrantAuthenticationTokenModel;
-import com.algaworks.algafood.auth.utils.OAuth2AuthenticationProviderUtils;
 import com.nimbusds.oauth2.sdk.util.CollectionUtils;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -143,6 +142,8 @@ public class OAuth2PasswordGrantAuthenticationProvider implements Authentication
             refreshToken = (OAuth2RefreshToken)generatedRefreshToken;
             authorizationBuilder.refreshToken(refreshToken);
         }
+
+//        authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, accessToken);
 
         log.info("Salvando authorization");
         authorization = authorizationBuilder.build();

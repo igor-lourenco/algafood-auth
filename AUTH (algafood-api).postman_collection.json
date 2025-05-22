@@ -1,321 +1,14 @@
 {
 	"info": {
-		"_postman_id": "69c5e033-b005-4f38-9e90-94aefd79ed0a",
-		"name": "AUTH (algafood-auth)",
+		"_postman_id": "79164bda-9e52-41d9-a9bd-0878811d8226",
+		"name": "AUTH (algafood-api)",
 		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
 		"_exporter_id": "12598061",
-		"_collection_link": "https://winter-rocket-642317.postman.co/workspace/Alga-Food~03855db6-bd63-4ea0-99fe-b25ba363d627/collection/12598061-69c5e033-b005-4f38-9e90-94aefd79ed0a?action=share&source=collection_link&creator=12598061"
+		"_collection_link": "https://winter-rocket-642317.postman.co/workspace/Alga-Food~03855db6-bd63-4ea0-99fe-b25ba363d627/collection/12598061-79164bda-9e52-41d9-a9bd-0878811d8226?action=share&source=collection_link&creator=12598061"
 	},
 	"item": [
 		{
-			"name": "1 - Fluxo Client Credentials",
-			"item": [
-				{
-					"name": "Passo 0 - Solicitar token",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var body = JSON.parse(responseBody);\r",
-									"var accessToken = body.access_token;\r",
-									"\r",
-									"postman.setEnvironmentVariable(\"TOKEN_ALGAFOOD\", accessToken);"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "basic",
-							"basic": {
-								"password": "web123",
-								"username": "faturamento"
-							}
-						},
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/x-www-form-urlencoded"
-							},
-							{
-								"key": "Authorization",
-								"value": "Basic YWxnYWZvb2Qtd2ViOndlYjEyMw==",
-								"disabled": true
-							}
-						],
-						"body": {
-							"mode": "urlencoded",
-							"urlencoded": [
-								{
-									"key": "username",
-									"value": "igor",
-									"type": "text",
-									"disabled": true
-								},
-								{
-									"key": "password",
-									"value": "123",
-									"type": "text",
-									"disabled": true
-								},
-								{
-									"key": "grant_type",
-									"value": "client_credentials",
-									"type": "text"
-								}
-							]
-						},
-						"url": "http://localhost:8081/oauth/token"
-					},
-					"response": []
-				},
-				{
-					"name": "Passo 1 - Valida token",
-					"request": {
-						"auth": {
-							"type": "basic",
-							"basic": {
-								"password": "web123",
-								"username": "faturamento"
-							}
-						},
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/x-www-form-urlencoded"
-							},
-							{
-								"key": "Authorization",
-								"value": "Basic YWxnYWZvb2Qtd2ViOndlYjEyMw==",
-								"disabled": true
-							}
-						],
-						"body": {
-							"mode": "urlencoded",
-							"urlencoded": [
-								{
-									"key": "token",
-									"value": "{{TOKEN_ALGAFOOD}}",
-									"type": "text"
-								}
-							]
-						},
-						"url": "http://localhost:8081/oauth/check_token"
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "2 - Fluxo Resource Owner Password Credentials",
-			"item": [
-				{
-					"name": "Passo 0 - Solicitar token",
-					"request": {
-						"auth": {
-							"type": "basic",
-							"basic": {
-								"password": "web123",
-								"username": "algafood-web"
-							}
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "urlencoded",
-							"urlencoded": [
-								{
-									"key": "username",
-									"value": "igor",
-									"type": "text"
-								},
-								{
-									"key": "password",
-									"value": "123",
-									"type": "text"
-								},
-								{
-									"key": "grant_type",
-									"value": "password",
-									"type": "text"
-								}
-							]
-						},
-						"url": "http://localhost:8081/oauth/token"
-					},
-					"response": []
-				},
-				{
-					"name": "Passo 1 - Checar token",
-					"request": {
-						"auth": {
-							"type": "basic",
-							"basic": {
-								"password": "web123",
-								"username": "algafood-web"
-							}
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "urlencoded",
-							"urlencoded": [
-								{
-									"key": "token",
-									"value": "d36122ed-b0e5-4f28-acea-eea1dfaee087",
-									"type": "text"
-								}
-							]
-						},
-						"url": "http://localhost:8081/oauth/check_token"
-					},
-					"response": []
-				},
-				{
-					"name": "Passo 2 - Refresh token (Caso token estiver expirado)",
-					"request": {
-						"auth": {
-							"type": "basic",
-							"basic": {
-								"password": "web123",
-								"username": "algafood-web"
-							}
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "urlencoded",
-							"urlencoded": [
-								{
-									"key": "refresh_token",
-									"value": "ccb77e0d-e2d7-4f49-827b-2d4ec3d655c0",
-									"type": "text"
-								},
-								{
-									"key": "grant_type",
-									"value": "refresh_token",
-									"type": "text"
-								}
-							]
-						},
-						"url": "http://localhost:8081/oauth/token"
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "3 - Fluxo Authorization Code",
-			"item": [
-				{
-					"name": "Passo 0 - Solicitar token",
-					"request": {
-						"auth": {
-							"type": "basic",
-							"basic": {
-								"password": "food123",
-								"username": "foodanalitics"
-							}
-						},
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/x-www-form-urlencoded"
-							},
-							{
-								"key": "Authorization",
-								"value": "Basic YWxnYWZvb2Qtd2ViOndlYjEyMw=="
-							}
-						],
-						"body": {
-							"mode": "urlencoded",
-							"urlencoded": [
-								{
-									"key": "grant_type",
-									"value": "authorization_code",
-									"type": "text"
-								},
-								{
-									"key": "code",
-									"value": "4cP5tu",
-									"type": "text"
-								},
-								{
-									"key": "redirect_uri",
-									"value": "http://aplicacao-cliente",
-									"type": "text"
-								}
-							]
-						},
-						"url": "http://localhost:8081/oauth/token"
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "4 - Fluxo Authorization Code com PKCE",
-			"item": [
-				{
-					"name": "Passo 0 - Solicitar token",
-					"request": {
-						"auth": {
-							"type": "basic",
-							"basic": {
-								"password": "food123",
-								"username": "foodanalitics"
-							}
-						},
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/x-www-form-urlencoded"
-							},
-							{
-								"key": "Authorization",
-								"value": "Basic YWxnYWZvb2Qtd2ViOndlYjEyMw=="
-							}
-						],
-						"body": {
-							"mode": "urlencoded",
-							"urlencoded": [
-								{
-									"key": "grant_type",
-									"value": "authorization_code",
-									"type": "text"
-								},
-								{
-									"key": "code",
-									"value": "3f9bPz",
-									"type": "text"
-								},
-								{
-									"key": "redirect_uri",
-									"value": "http://aplicacao_cliente",
-									"type": "text"
-								},
-								{
-									"key": "code_verifier",
-									"value": "LSeXn2-72dH9NELNF_WI-fxo14gXa9clfQ-_W-t1XxQ",
-									"type": "text"
-								}
-							]
-						},
-						"url": "http://localhost:8081/oauth/token"
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "5 - Fluxo Token JWT",
+			"name": "Fluxo Token JWT",
 			"item": [
 				{
 					"name": "Passo 0 - Solicita token",
@@ -332,16 +25,6 @@
 								"type": "text/javascript",
 								"packages": {}
 							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
 						}
 					],
 					"request": {
@@ -353,43 +36,23 @@
 							}
 						},
 						"method": "POST",
-						"header": [],
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							},
+							{
+								"key": "Authorization",
+								"value": "Basic YWxnYWZvb2Qtd2ViOndlYjEyMw=="
+							}
+						],
 						"body": {
 							"mode": "urlencoded",
 							"urlencoded": [
 								{
 									"key": "username",
 									"value": "diana@email.com",
-									"description": "id 1 admin",
-									"type": "text",
-									"disabled": true
-								},
-								{
-									"key": "username",
-									"value": "lexi@email.com",
-									"description": "id 2 vendedor",
-									"type": "text",
-									"disabled": true
-								},
-								{
-									"key": "username",
-									"value": "angela@email.com",
-									"description": "id 5 usuario sem nenhuma permissao",
 									"type": "text"
-								},
-								{
-									"key": "username",
-									"value": "riley@email.com",
-									"description": "id 4",
-									"type": "text",
-									"disabled": true
-								},
-								{
-									"key": "username",
-									"value": "lana@email.com",
-									"description": "id 6",
-									"type": "text",
-									"disabled": true
 								},
 								{
 									"key": "password",
@@ -403,7 +66,7 @@
 								}
 							]
 						},
-						"url": "http://localhost:8081/oauth/token"
+						"url": "http://localhost:8080/oauth/token"
 					},
 					"response": []
 				},
@@ -434,7 +97,7 @@
 								}
 							]
 						},
-						"url": "http://localhost:8081/oauth/check_token"
+						"url": "http://192.168.0.54:90/oauth/check_token"
 					},
 					"response": []
 				},
@@ -444,26 +107,115 @@
 						"auth": {
 							"type": "basic",
 							"basic": {
-								"password": "web123",
-								"username": "algafood-web"
+								"username": "algafood-web",
+								"password": "web123"
 							}
 						},
 						"method": "GET",
 						"header": [],
-						"url": "http://localhost:8081/oauth/token_key"
+						"url": "http://localhost:8080/oauth/token_key"
+					},
+					"response": []
+				},
+				{
+					"name": "Passo 4 - JWKS",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": "http://localhost:8080/.well-know/jwks.json"
+					},
+					"response": []
+				},
+				{
+					"name": "Passo 5 - Checagem do Load balance",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": "http://192.168.0.54:90/host-check"
 					},
 					"response": []
 				}
 			]
 		},
 		{
-			"name": "6 - Novo Fluxo Client Credentials OAuth 2",
+			"name": "Fluxo Authorizion Code",
 			"item": [
 				{
-					"name": "1 - Token Opaco",
+					"name": "Passo 0 - Solicita Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var body = JSON.parse(responseBody);\r",
+									"var accessToken = body.access_token;\r",
+									"\r",
+									"postman.setEnvironmentVariable(\"TOKEN_ALGAFOOD\", accessToken);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							},
+							{
+								"key": "Authorization",
+								"value": "Basic Zm9vZGFuYWx5dGljczp3ZWIxMjM="
+							},
+							{
+								"key": "Cookie",
+								"value": "JSESSIONID=6417B605A49A7F5CF714BEB8C08A2FD6"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "authorization_code",
+									"type": "text"
+								},
+								{
+									"key": "code",
+									"value": "xPepMs",
+									"type": "text"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "http://www.foodanalytics.local:8082",
+									"type": "text"
+								}
+							]
+						},
+						"url": "http://192.168.0.54:90/oauth/token"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Novo Fluxo Client Credentials",
+			"item": [
+				{
+					"name": "Token Opaco",
 					"item": [
 						{
-							"name": "Passo 0 - Solicita token Opaco",
+							"name": "Passo 0 - Solicita token opaco ",
 							"event": [
 								{
 									"listen": "test",
@@ -487,14 +239,7 @@
 									}
 								},
 								"method": "POST",
-								"header": [
-									{
-										"key": "",
-										"value": "",
-										"type": "text",
-										"disabled": true
-									}
-								],
+								"header": [],
 								"body": {
 									"mode": "formdata",
 									"formdata": [
@@ -516,19 +261,7 @@
 							"response": []
 						},
 						{
-							"name": "Passo 1 - Inspeciona token Opaco",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											""
-										],
-										"type": "text/javascript",
-										"packages": {}
-									}
-								}
-							],
+							"name": "Passo 1 - Inspeciona token opaco",
 							"request": {
 								"auth": {
 									"type": "basic",
@@ -549,24 +282,12 @@
 										}
 									]
 								},
-								"url": "http://localhost:8081/oauth2/introspect"
+								"url": "http://localhost:8080/oauth2/introspect"
 							},
 							"response": []
 						},
 						{
 							"name": "Passo 2- Revogando token Opaco (Ou seja, invalidando token)",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											""
-										],
-										"type": "text/javascript",
-										"packages": {}
-									}
-								}
-							],
 							"request": {
 								"auth": {
 									"type": "basic",
@@ -583,22 +304,21 @@
 										{
 											"key": "token",
 											"value": "{{TOKEN_OPACO}}",
-											"description": "altera o atributo 'metadata.token.invalidated' da coluna 'access_token_metadata' para true ",
 											"type": "text"
 										}
 									]
 								},
-								"url": "http://localhost:8081/oauth2/revoke"
+								"url": "http://localhost:8080/oauth2/revoke"
 							},
 							"response": []
 						}
 					]
 				},
 				{
-					"name": "2 - Token JWT",
+					"name": "Token JWT",
 					"item": [
 						{
-							"name": "Passo 0 - Solicita token JWT",
+							"name": "Passo 0 - Solicita token",
 							"event": [
 								{
 									"listen": "test",
@@ -625,7 +345,7 @@
 								"header": [
 									{
 										"key": "Authorization",
-										"value": "Basic YWxnYWZvb2Qtd2ViLWNsaWVudC1jcmVkZW50aWFscy10b2tlbi1vcGFjbzp3ZWIxMjM="
+										"value": "Basic YWxnYWZvb2Qtd2ViLWNsaWVudC1jcmVkZW50aWFscy10b2tlbi1qd3Q6d2ViMTIz"
 									},
 									{
 										"key": "Cookie",
@@ -662,16 +382,7 @@
 									}
 								},
 								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Basic YWxnYWZvb2Qtd2ViLWNsaWVudC1jcmVkZW50aWFscy10b2tlbi1vcGFjbzp3ZWIxMjM="
-									},
-									{
-										"key": "Cookie",
-										"value": "JSESSIONID=AB0CD74602FA2B757C0ADC8CF08E7B8A"
-									}
-								],
+								"header": [],
 								"body": {
 									"mode": "formdata",
 									"formdata": [
@@ -685,51 +396,16 @@
 								"url": "http://localhost:8080/oauth2/introspect"
 							},
 							"response": []
-						},
-						{
-							"name": "Passo 2- Revogando token JWT (Ou seja, invalidando token)",
-							"request": {
-								"auth": {
-									"type": "basic",
-									"basic": {
-										"username": "algafood-web-client-credentials-token-jwt",
-										"password": "web123"
-									}
-								},
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Basic YWxnYWZvb2Qtd2ViLWNsaWVudC1jcmVkZW50aWFscy10b2tlbi1vcGFjbzp3ZWIxMjM="
-									},
-									{
-										"key": "Cookie",
-										"value": "JSESSIONID=AB0CD74602FA2B757C0ADC8CF08E7B8A"
-									}
-								],
-								"body": {
-									"mode": "formdata",
-									"formdata": [
-										{
-											"key": "token",
-											"value": "{{TOKEN_JWT}}",
-											"type": "text"
-										}
-									]
-								},
-								"url": "http://localhost:8080/oauth2/revoke"
-							},
-							"response": []
 						}
 					]
 				}
 			]
 		},
 		{
-			"name": "7 - Novo Fluxo Authorization Code OAuth 2",
+			"name": "Novo Fluxo Authorization Code",
 			"item": [
 				{
-					"name": "Passo 0 - Exemplo de endpoint para ser usado no Login (front-end) Copy",
+					"name": "Passo 0 - Exemplo de endpoint para ser usado no Login (front-end)",
 					"request": {
 						"auth": {
 							"type": "noauth"
@@ -832,7 +508,7 @@
 								},
 								{
 									"key": "code",
-									"value": "d8jpcUcHqRKvZhhRCjGpEFSrllJYIL0H5htgJwvW4FAae6iO_LIx05zv97-i5ZicGL7hhyaUwoawavjV7gmVRX1u49e3qIDx_iJlHbE2qRZjENZXJ2l7iBzNl9Kp_N_V",
+									"value": "sv-d3yq5SHoJ8-IKHOpP4ZW554TN6b8EZNGVhk0cNPxdXTlB13Ln7DIU-i3oSG3CsX1CCbHN-tttCf25zAmL7dECmz2mA6kEJ-MiY8Zo1L3UX6QOeQR5nhLIX4URQ3id",
 									"description": "'code' gerado e mostrado no endpoint do browser ",
 									"type": "text"
 								},
@@ -861,7 +537,33 @@
 					"response": []
 				},
 				{
-					"name": "Passo 1 - Solicita token JWT via refresh token",
+					"name": "Passo 2 - Inspeciona token JWT",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": {
+								"username": "algafood-web-authorization-code-token-jwt",
+								"password": "web123"
+							}
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "token",
+									"value": "{{TOKEN_JWT}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": "http://localhost:8080/oauth2/introspect"
+					},
+					"response": []
+				},
+				{
+					"name": "Passo 3 - Solicita token JWT via refresh token",
 					"event": [
 						{
 							"listen": "test",
@@ -907,7 +609,98 @@
 								{
 									"key": "refresh_token",
 									"value": "{{REFRESH_TOKEN_OPACO}}",
-									"description": "'code' gerado e mostrado no endpoint do browser ",
+									"type": "text"
+								}
+							]
+						},
+						"url": "http://localhost:8080/oauth2/token"
+					},
+					"response": []
+				},
+				{
+					"name": "Passo 4 - Revogando refresh token e o access token(Ou seja, invalidando refresh token e o access_token)",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": {
+								"username": "algafood-web-authorization-code-token-jwt",
+								"password": "web123"
+							}
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "token",
+									"value": "{{REFRESH_TOKEN_OPACO}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": "http://localhost:8080/oauth2/revoke"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Novo Fluxo Password",
+			"item": [
+				{
+					"name": "Passo 0 - Solicita token",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": {
+								"password": "web123",
+								"username": "algafood-web-password-token-jwt"
+							}
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Basic YWxnYWZvb2Qtd2ViLWNsaWVudC1jcmVkZW50aWFscy10b2tlbi1qd3Q6d2ViMTIz"
+							},
+							{
+								"key": "Cookie",
+								"value": "JSESSIONID=AB0CD74602FA2B757C0ADC8CF08E7B8A; JSESSIONID=D99CDD9C54A55EF8E07392FB477FA73E"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "grant_type",
+									"value": "password",
+									"type": "text"
+								},
+								{
+									"key": "scope",
+									"value": "READ WRITE",
+									"type": "text"
+								},
+								{
+									"key": "client_id",
+									"value": "algafood-web-password-token-jwt",
+									"type": "text"
+								},
+								{
+									"key": "client_secret",
+									"value": "web123",
+									"description": "não está validando a senha, depois implementar",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "diana@email.com",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "123",
 									"type": "text"
 								}
 							]

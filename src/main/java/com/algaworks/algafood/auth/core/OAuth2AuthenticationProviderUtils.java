@@ -1,4 +1,4 @@
-package com.algaworks.algafood.auth.utils;
+package com.algaworks.algafood.auth.core;
 
 
 import org.springframework.security.authentication.AuthenticationProvider;
