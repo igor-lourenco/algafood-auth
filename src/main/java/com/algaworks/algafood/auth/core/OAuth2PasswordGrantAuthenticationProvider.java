@@ -27,7 +27,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.algaworks.algafood.auth.core.OAuth2PasswordGrantAuthenticationConverter.PASSWORD_GRANT_TYPE;
-import static com.algaworks.algafood.auth.utils.OAuth2EndpointUtils.ACCESS_TOKEN_REQUEST_ERROR_URI;
+import static com.algaworks.algafood.auth.core.OAuth2EndpointUtils.ACCESS_TOKEN_REQUEST_ERROR_URI;
 
 
 /** {@link AuthenticationProvider} implementation for the OAuth 2.0 Resource Owner Password Credentials Grant. */
@@ -143,7 +143,7 @@ public class OAuth2PasswordGrantAuthenticationProvider implements Authentication
             authorizationBuilder.refreshToken(refreshToken);
         }
 
-//        authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, accessToken);
+        authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, accessToken);
 
         log.info("Salvando authorization");
         authorization = authorizationBuilder.build();

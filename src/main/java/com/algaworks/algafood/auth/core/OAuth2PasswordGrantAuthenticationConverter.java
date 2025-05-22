@@ -1,7 +1,6 @@
 package com.algaworks.algafood.auth.core;
 
 import com.algaworks.algafood.auth.models.OAuth2PasswordGrantAuthenticationTokenModel;
-import com.algaworks.algafood.auth.utils.OAuth2EndpointUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.Nullable;

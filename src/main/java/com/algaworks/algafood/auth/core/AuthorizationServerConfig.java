@@ -1,6 +1,5 @@
 package com.algaworks.algafood.auth.core;
 
-import com.algaworks.algafood.auth.utils.OAuth2ConfigurerUtils;
 import com.algaworks.algafood.auth.properties.AlgafoodSecurityProperties;
 import com.algaworks.algafood.auth.services.JdbcOAuth2AuthorizationQueryService;
 import com.algaworks.algafood.auth.services.OAuth2AuthorizationQueryService;
@@ -51,7 +50,6 @@ public class AuthorizationServerConfig {
         , OAuth2AuthorizationService authorizationService
         ) throws Exception {
         OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
-
 
 
 //      https://gist.github.com/akuma8/2eb244b796f3d3506956207997fb290f
