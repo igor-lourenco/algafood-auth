@@ -55,13 +55,14 @@ public class OAuth2PasswordGrantAuthenticationProvider implements Authentication
         OAuth2PasswordGrantAuthenticationTokenModel passwordGrantAuthenticationToken = (OAuth2PasswordGrantAuthenticationTokenModel) authentication;
 
         // garante que o cliente esteja autenticado
-        OAuth2ClientAuthenticationToken clientPrincipal = OAuth2AuthenticationProviderUtils.getAuthenticatedClientElseThrowInvalidClient((Authentication) passwordGrantAuthenticationToken.getPrincipal());
+        OAuth2ClientAuthenticationToken clientPrincipal = OAuth2AuthenticationProviderUtils
+            .getAuthenticatedClientElseThrowInvalidClient((Authentication) passwordGrantAuthenticationToken.getPrincipal());
 
         RegisteredClient registeredClient = clientPrincipal.getRegisteredClient();
 
         // se o cliente não estiver registrado ou não for compatível com -> grant_type password (tipo de concessão de senha)
         if (registeredClient == null || !registeredClient.getAuthorizationGrantTypes().contains(passwordGrantAuthenticationToken.getGrantType())) {
-            log.info("Cliente não registrado ou grant_type não compatível");
+            log.info("Cliente não registrado ou grant_type não compatível com 'password'");
             throw new OAuth2AuthenticationException(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT);
         }
 

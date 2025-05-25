@@ -50,7 +50,7 @@ public final class OAuth2ConfigurerUtils {
 
             if (tokenGenerator == null) { // Se ainda não tiver,
 
-                log.info("Nenhum OAuth2TokenGenerator definido manualmente via @Bean, tentando recuperar um JwtGenerator para criar um OAuth2TokenGenerator");
+                log.info("Nenhum OAuth2TokenGenerator definido manualmente via @Bean, tentando recuperar um JwtGenerator para criar um novo OAuth2TokenGenerator");
 //              Recupera um JwtGenerator - gerador de tokens JWT (Access Token ou ID Token com formato JWT).
                 JwtGenerator jwtGenerator = getJwtGenerator(httpSecurity);
 

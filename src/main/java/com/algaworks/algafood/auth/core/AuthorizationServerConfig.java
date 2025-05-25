@@ -47,18 +47,27 @@ public class AuthorizationServerConfig {
     public SecurityFilterChain authFilterChain(HttpSecurity http
         , UserDetailsService userDetailsService
         , PasswordEncoder passwordEncoder
-        , OAuth2AuthorizationService authorizationService
-        ) throws Exception {
+        , OAuth2AuthorizationService authorizationService) throws Exception {
+
         OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
 
 
 //      https://gist.github.com/akuma8/2eb244b796f3d3506956207997fb290f
-//      Password Grant Authentication Provider registration
+//      Recupera o nosso OAuth2TokenGenerator customizado (que pode gerar JWTs, access tokens, refresh tokens etc.).
         OAuth2TokenGenerator<?> tokenGenerator = OAuth2ConfigurerUtils.getTokenGenerator(http);
 
+//      Esse converter transforma a requisição /oauth2/token com grant_type=password em um Authentication customizado.
+        var converter = new OAuth2PasswordGrantAuthenticationConverter();
+
+//      Esse provider é a nossa implementação customizada para autenticar o usuário e o cliente, gerar os tokens (access, refresh) e salvar a autorização no banco de dados
+        var provider = new OAuth2PasswordGrantAuthenticationProvider(userDetailsService, passwordEncoder, authorizationService, tokenGenerator);
+
+//      Adicionando o suporte ao fluxo de senha (password grant) no Authorization Server do Spring Security de forma customizada
         authorizationServerConfigurer.tokenEndpoint(tokenEndpoint ->
-            tokenEndpoint.accessTokenRequestConverter(new OAuth2PasswordGrantAuthenticationConverter())
-                .authenticationProvider(new OAuth2PasswordGrantAuthenticationProvider(userDetailsService, passwordEncoder, authorizationService, tokenGenerator))
+            tokenEndpoint
+                .accessTokenRequestConverter(converter) // Adicionando a nossa implementação do AuthenticationConverter (para ler a requisição);
+                .authenticationProvider(provider) // Adicionando a nossa implementação do AuthenticationProvider (para validar e emitir tokens).
+                .authenticationProvider(new OAuth2PasswordGrantRefreshTokenAuthenticationProvider(authorizationService, tokenGenerator))
         );
 
 
@@ -88,13 +97,8 @@ public class AuthorizationServerConfig {
     public SecurityFilterChain defaultFilterChain(HttpSecurity httpSecurity) throws Exception {
 
         httpSecurity.formLogin(Customizer.withDefaults())
-//            .authorizeHttpRequests(authorization -> authorization
-//                .securityMatchers("/oauth2/**").authenticated() // Exige autenticação para todas as requisições da aplicação exceto os endpoints /oauth2/**.
-            .csrf().disable().cors();
-//            and()
-//            .csrf().disable(); // Desativa proteção contra CSRF (Cross-Site Request Forgery) porque o ataque de CSRF geralmente depende de um navegador do usuário e de cookies de autenticação
+            .csrf().disable().cors(); // Desativa proteção contra CSRF (Cross-Site Request Forgery) porque o ataque de CSRF geralmente depende de um navegador do usuário e de cookies de autenticação
 
-        // Para personalizar a página de login implementada no WebMvcSecurityConfig
         return httpSecurity.build();
     }
 

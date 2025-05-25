@@ -2,6 +2,7 @@ package com.algaworks.algafood.auth.core;
 
 import com.algaworks.algafood.auth.models.OAuth2PasswordGrantAuthenticationTokenModel;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.security.core.Authentication;
@@ -14,22 +15,22 @@ import org.springframework.util.MultiValueMap;
 
 import java.util.Set;
 
-/**
- * Conversor para o tipo de concessão de senha OAuth2. Este conversor é usado para converter uma solicitação em um objeto de autenticação.
+/**Conversor para o tipo de concessão de senha OAuth2(fluxo Password). Este conversor é usado para converter uma solicitação em um objeto de autenticação.
  * O Spring Authorization Server não fornece um conversor para este tipo de concessão. Portanto, precisamos implementá-lo por conta própria.
- *
- * @author Attoumane AHAMADI
  */
+@Log4j2
 public class OAuth2PasswordGrantAuthenticationConverter implements AuthenticationConverter {
     public static final AuthorizationGrantType PASSWORD_GRANT_TYPE = new AuthorizationGrantType("password");
 
     @Nullable
     @Override // Se o cliente não estiver registrado no banco de dados, ele nem chega aqui e já é retornado o 401 pelo próprio Spring Security
     public Authentication convert(HttpServletRequest request) {
-        // grant_type (REQUIRED)
+
+        // pegando o grant_type 'password' que representa o Password flow
         String grantType = request.getParameter(OAuth2ParameterNames.GRANT_TYPE);
 
         if (!PASSWORD_GRANT_TYPE.getValue().equals(grantType)) {
+            log.info("O parâmetro grant_type não é do tipo 'password'");
             return null;
         }
 
@@ -37,22 +38,28 @@ public class OAuth2PasswordGrantAuthenticationConverter implements Authenticatio
         Authentication clientPrincipal = SecurityContextHolder.getContext().getAuthentication();
 
         if (clientPrincipal == null) {
+            log.error("Client não encontrado...");
             OAuth2EndpointUtils.throwError(OAuth2ErrorCodes.INVALID_CLIENT, OAuth2ParameterNames.CLIENT_ID,
                 OAuth2EndpointUtils.ACCESS_TOKEN_REQUEST_ERROR_URI);
         }
 
-        // Pega os parâmetros da requisição
+        log.info("Pegando os parâmetros da requisição");
         MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
 
-        // Se o ID do cliente não corresponder ao ID do cliente na solicitação, lança exception
         if (!StringUtils.equals(clientPrincipal.getName(), parameters.getFirst(OAuth2ParameterNames.CLIENT_ID))) {
+            log.error("ID do client não corresponde ao ID do client no parâmetro (client_id) da request...");
             OAuth2EndpointUtils.throwError(OAuth2ErrorCodes.INVALID_CLIENT, OAuth2ParameterNames.CLIENT_ID,
                 OAuth2EndpointUtils.ACCESS_TOKEN_REQUEST_ERROR_URI);
         }
 
-        // scope (OPTIONAL)
+
+        //TODO: implementar a validação de senha do client
+
+        // scope
         String scope = parameters.getFirst(OAuth2ParameterNames.SCOPE);
+
         if (StringUtils.isNotBlank(scope) && parameters.get(OAuth2ParameterNames.SCOPE).size() != 1) {
+            log.error("O parâmetro (scope) está vazio ou tamanho diferente de 1");
             OAuth2EndpointUtils.throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.SCOPE,
                 OAuth2EndpointUtils.ACCESS_TOKEN_REQUEST_ERROR_URI);
         }
