@@ -30,7 +30,7 @@ import static com.algaworks.algafood.auth.core.OAuth2PasswordGrantAuthentication
 import static com.algaworks.algafood.auth.core.OAuth2EndpointUtils.ACCESS_TOKEN_REQUEST_ERROR_URI;
 
 
-/** {@link AuthenticationProvider} implementation for the OAuth 2.0 Resource Owner Password Credentials Grant. */
+/** Implementação do OAuth 2.0 para o fluxo: Resource Owner Password Credentials Grant. */
 @Log4j2
 public class OAuth2PasswordGrantAuthenticationProvider implements AuthenticationProvider {
     private static final OAuth2TokenType AUTHORIZATION_CODE_TOKEN_TYPE = new OAuth2TokenType("password");
@@ -46,7 +46,6 @@ public class OAuth2PasswordGrantAuthenticationProvider implements Authentication
         this.authorizationService = authorizationService;
         this.tokenGenerator = tokenGenerator;
     }
-
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
@@ -66,12 +65,13 @@ public class OAuth2PasswordGrantAuthenticationProvider implements Authentication
             throw new OAuth2AuthenticationException(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT);
         }
 
+        // pega os scopes passados no parâmetro da request e validando se o cliente tem esses scopes
         Set<String> authorizedScopes = Collections.emptySet();
 
-        // pega os scopes passados no parâmetro
         if (CollectionUtils.isNotEmpty(passwordGrantAuthenticationToken.getScopes())) {
             for (String requestedScope : passwordGrantAuthenticationToken.getScopes()) {
                 if (!registeredClient.getScopes().contains(requestedScope)) {
+                    log.error("O client: {}, não tem cadastrado o scope: {}", registeredClient.getClientId(), requestedScope);
                     throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_SCOPE);
                 }
             }
@@ -91,15 +91,7 @@ public class OAuth2PasswordGrantAuthenticationProvider implements Authentication
         log.info("Adicionando as lista de Authorities");
         passwordGrantAuthenticationToken.getAuthorities().addAll(userDetails.getAuthorities());
 
-        Map<String, Object> tokenMetadata = new HashMap<>();
-        tokenMetadata.put("username", userDetails.getUsername());
-        tokenMetadata.put("roles", userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toSet()));
-        if (CollectionUtils.isNotEmpty(authorizedScopes)) {
-            tokenMetadata.put("scopes", authorizedScopes);
-        }
-
         log.info("Gerando token de acesso");
-
         DefaultOAuth2TokenContext.Builder tokenContextBuilder = DefaultOAuth2TokenContext.builder()
             .registeredClient(registeredClient)
             .principal(passwordGrantAuthenticationToken)
@@ -117,9 +109,18 @@ public class OAuth2PasswordGrantAuthenticationProvider implements Authentication
             throw new OAuth2AuthenticationException(error);
         }
 
+        log.info("Token de acesso gerado com sucesso...");
         OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
             generatedAccessToken.getTokenValue(), generatedAccessToken.getIssuedAt(),
             generatedAccessToken.getExpiresAt(), tokenContext.getAuthorizedScopes());
+
+        log.info("Preparando os metadados que serão associados ao Authorization...");
+        Map<String, Object> tokenMetadata = new HashMap<>();
+        tokenMetadata.put("username", userDetails.getUsername());
+        tokenMetadata.put("roles", userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toSet()));
+        if (CollectionUtils.isNotEmpty(authorizedScopes)) {
+            tokenMetadata.put("scopes", authorizedScopes);
+        }
 
         OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(registeredClient)
             .principalName(userDetails.getUsername())
@@ -128,7 +129,6 @@ public class OAuth2PasswordGrantAuthenticationProvider implements Authentication
             .build();
 
         log.info("Gerando refresh token");
-
         OAuth2Authorization.Builder authorizationBuilder = OAuth2Authorization.from(authorization);
         OAuth2RefreshToken refreshToken = null;
         if (registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.REFRESH_TOKEN) && !clientPrincipal.getClientAuthenticationMethod().equals(ClientAuthenticationMethod.NONE)) {
@@ -144,10 +144,12 @@ public class OAuth2PasswordGrantAuthenticationProvider implements Authentication
             authorizationBuilder.refreshToken(refreshToken);
         }
 
-        authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, accessToken);
+        log.info("Refresh token gerado com sucesso...");
+
+        authorization = authorizationBuilder.build();
+//      authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, accessToken); // não é necessário na geração do token JWT
 
         log.info("Salvando authorization");
-        authorization = authorizationBuilder.build();
         this.authorizationService.save(authorization);
 
         return new OAuth2AccessTokenAuthenticationToken(registeredClient, clientPrincipal, accessToken, refreshToken);

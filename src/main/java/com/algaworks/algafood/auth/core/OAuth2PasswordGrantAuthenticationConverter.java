@@ -46,18 +46,24 @@ public class OAuth2PasswordGrantAuthenticationConverter implements Authenticatio
         log.info("Pegando os parâmetros da requisição");
         MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
 
+        // validando o client_id se são iguais
         if (!StringUtils.equals(clientPrincipal.getName(), parameters.getFirst(OAuth2ParameterNames.CLIENT_ID))) {
             log.error("ID do client não corresponde ao ID do client no parâmetro (client_id) da request...");
             OAuth2EndpointUtils.throwError(OAuth2ErrorCodes.INVALID_CLIENT, OAuth2ParameterNames.CLIENT_ID,
                 OAuth2EndpointUtils.ACCESS_TOKEN_REQUEST_ERROR_URI);
         }
 
+        // validando o client_secret se são iguais
+        if (!StringUtils.equals(String.valueOf (clientPrincipal.getCredentials()), parameters.getFirst(OAuth2ParameterNames.CLIENT_SECRET))){
+            log.error("Client secret do cliente não corresponde ao client secret no parâmetro (client_secret) da request...");
+            OAuth2EndpointUtils.throwError(OAuth2ErrorCodes.INVALID_CLIENT, OAuth2ParameterNames.CLIENT_SECRET,
+                OAuth2EndpointUtils.ACCESS_TOKEN_REQUEST_ERROR_URI);
+        }
 
-        //TODO: implementar a validação de senha do client
-
-        // scope
+        // pegando o scope
         String scope = parameters.getFirst(OAuth2ParameterNames.SCOPE);
 
+        // validando o scope
         if (StringUtils.isNotBlank(scope) && parameters.get(OAuth2ParameterNames.SCOPE).size() != 1) {
             log.error("O parâmetro (scope) está vazio ou tamanho diferente de 1");
             OAuth2EndpointUtils.throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.SCOPE,
