@@ -15,10 +15,8 @@ public class OAuth2PasswordGrantRefreshTokenAuthenticationProvider implements Au
     private final OAuth2AuthorizationService authorizationService;
     private final OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator;
 
-    public OAuth2PasswordGrantRefreshTokenAuthenticationProvider(
-        OAuth2AuthorizationService authorizationService,
-        OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator
-    ) {
+    public OAuth2PasswordGrantRefreshTokenAuthenticationProvider(OAuth2AuthorizationService authorizationService,
+        OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator) {
         this.authorizationService = authorizationService;
         this.tokenGenerator = tokenGenerator;
     }

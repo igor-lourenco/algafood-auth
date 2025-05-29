@@ -51,6 +51,8 @@ public class AuthorizationServerConfig {
 
         OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
 
+        authorizationServerConfigurer.authorizationEndpoint(customizer ->
+            customizer.consentPage("/oauth2/consent")); // página de consentimento
 
 //      https://gist.github.com/akuma8/2eb244b796f3d3506956207997fb290f
 //      Recupera o nosso OAuth2TokenGenerator customizado (que pode gerar JWTs, access tokens, refresh tokens etc.).
@@ -70,9 +72,6 @@ public class AuthorizationServerConfig {
                 .authenticationProvider(new OAuth2PasswordGrantRefreshTokenAuthenticationProvider(authorizationService, tokenGenerator))
         );
 
-
-        authorizationServerConfigurer.authorizationEndpoint(customizer ->
-            customizer.consentPage("/oauth2/consent")); // página de consentimento
 
         RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
 
@@ -94,12 +93,12 @@ public class AuthorizationServerConfig {
 
 
     @Bean // Define uma SecurityFilterChain default
-    public SecurityFilterChain defaultFilterChain(HttpSecurity httpSecurity) throws Exception {
+    public SecurityFilterChain defaultFilterChain(HttpSecurity http) throws Exception {
 
-        httpSecurity.formLogin(Customizer.withDefaults())
+        http.formLogin(Customizer.withDefaults())
             .csrf().disable().cors(); // Desativa proteção contra CSRF (Cross-Site Request Forgery) porque o ataque de CSRF geralmente depende de um navegador do usuário e de cookies de autenticação
 
-        return httpSecurity.build();
+        return http.formLogin(customizer -> customizer.loginPage("/login")).build();
     }
 
 
@@ -121,7 +120,8 @@ public class AuthorizationServerConfig {
 
         // armazena em memória
 //        return new InMemoryRegisteredClientRepository(
-//            Arrays.asList(
+//            Arrays.asList(git status
+
 //                algafoodClientCredentialsTokenOpaco,
 //                algafoodClientCredentialsTokenJWT,
 //                algafoodAuthorizationCodeTokenJWT));
@@ -142,7 +142,6 @@ public class AuthorizationServerConfig {
     // Configura serviço de autorização OAuth2 baseado em JDBC para armazenar e gerenciar autorizações de clientes.
     public OAuth2AuthorizationService oAuth2AuthorizationService(JdbcOperations jdbcOperations, RegisteredClientRepository registeredClientRepository) {
         return new JdbcOAuth2AuthorizationService(jdbcOperations, registeredClientRepository); // sem usar a implementação customizada
-        // return new CustomOAuth2AuthorizationService(jdbcOperations, registeredClientRepository);
     }
 
     private static RegisteredClient clienteClientCredentialsUsandoTokenOpaco(PasswordEncoder passwordEncoder) {
@@ -241,8 +240,7 @@ public class AuthorizationServerConfig {
             .build();
     }
 
-    @Bean
-    // Configura serviço de autorização OAuth2 baseado em JDBC para armazenar as autorizações de consentimento dos clientes autorizados pelos usuarios.
+    @Bean // Configura serviço de autorização OAuth2 baseado em JDBC para armazenar as autorizações de consentimento dos clientes autorizados pelos usuarios.
     public OAuth2AuthorizationConsentService consentService(JdbcOperations jdbcOperations, RegisteredClientRepository registeredClientRepository) {
 //        return new InMemoryOAuth2AuthorizationConsentService();
         return new JdbcOAuth2AuthorizationConsentService(jdbcOperations, registeredClientRepository);
