@@ -13,7 +13,9 @@ import java.util.Set;
 
 import static com.algaworks.algafood.auth.core.OAuth2PasswordGrantAuthenticationConverter.PASSWORD_GRANT_TYPE;
 
-/** Token de autenticação para a concessão de credenciais de senha do proprietário do recurso OAuth 2.0. */
+/**
+ * Token de autenticação para a concessão de credenciais de senha do proprietário do recurso OAuth 2.0.
+ */
 @Getter
 public class OAuth2PasswordGrantAuthenticationTokenModel extends OAuth2AuthorizationGrantAuthenticationToken {
     @Serial
@@ -31,5 +33,16 @@ public class OAuth2PasswordGrantAuthenticationTokenModel extends OAuth2Authoriza
         this.username = username;
         this.clientId = clientPrincipal.getName();
         this.scopes = scopes;
+    }
+
+
+    public OAuth2PasswordGrantAuthenticationTokenModel(String username, String password, Authentication clientPrincipal
+        , Set<String> scopes, Collection<? extends GrantedAuthority> authorities) {
+        super(PASSWORD_GRANT_TYPE, clientPrincipal, null);
+        this.username = username;
+        this.password = password;
+        this.clientId = clientPrincipal.getName();
+        this.scopes = scopes;
+        this.authorities.addAll(authorities);
     }
 }

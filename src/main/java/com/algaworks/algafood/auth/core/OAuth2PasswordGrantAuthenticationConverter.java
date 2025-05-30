@@ -30,9 +30,9 @@ public class OAuth2PasswordGrantAuthenticationConverter implements Authenticatio
         String grantType = request.getParameter(OAuth2ParameterNames.GRANT_TYPE);
 
         if (!PASSWORD_GRANT_TYPE.getValue().equals(grantType)) {
-            log.info("O parâmetro grant_type não é do tipo 'password'");
             return null;
         }
+        log.info("O parâmetro grant_type é do tipo 'password'...");
 
         // Pega as informações do cliente registrado no banco de dados que já foi autenticado pelo Spring Security
         Authentication clientPrincipal = SecurityContextHolder.getContext().getAuthentication();

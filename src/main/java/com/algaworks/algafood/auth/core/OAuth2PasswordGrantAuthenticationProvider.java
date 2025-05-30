@@ -12,6 +12,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.*;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
@@ -23,16 +25,18 @@ import org.springframework.security.oauth2.server.authorization.token.DefaultOAu
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.algaworks.algafood.auth.core.OAuth2PasswordGrantAuthenticationConverter.PASSWORD_GRANT_TYPE;
 import static com.algaworks.algafood.auth.core.OAuth2EndpointUtils.ACCESS_TOKEN_REQUEST_ERROR_URI;
+import static com.algaworks.algafood.auth.core.OAuth2PasswordGrantAuthenticationConverter.PASSWORD_GRANT_TYPE;
 
 
 /** Implementação do OAuth 2.0 para o fluxo: Resource Owner Password Credentials Grant. */
 @Log4j2
 public class OAuth2PasswordGrantAuthenticationProvider implements AuthenticationProvider {
+    private static final String AUTHORIZATION_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1";
     private static final OAuth2TokenType AUTHORIZATION_CODE_TOKEN_TYPE = new OAuth2TokenType("password");
     private final UserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
@@ -114,7 +118,7 @@ public class OAuth2PasswordGrantAuthenticationProvider implements Authentication
             generatedAccessToken.getTokenValue(), generatedAccessToken.getIssuedAt(),
             generatedAccessToken.getExpiresAt(), tokenContext.getAuthorizedScopes());
 
-        log.info("Preparando os metadados que serão associados ao Authorization...");
+        log.info("Preparando os metadados que serão associados ao Authorization e salvar no banco de dados...");
         Map<String, Object> tokenMetadata = new HashMap<>();
         tokenMetadata.put("username", userDetails.getUsername());
         tokenMetadata.put("roles", userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toSet()));
@@ -122,10 +126,15 @@ public class OAuth2PasswordGrantAuthenticationProvider implements Authentication
             tokenMetadata.put("scopes", authorizedScopes);
         }
 
+        OAuth2AuthorizationRequest authorizationRequest = createOAuth2AuthorizationRequestWithGrantTypePassword(passwordGrantAuthenticationToken);
+
         OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(registeredClient)
-            .principalName(userDetails.getUsername())
-            .authorizationGrantType(PASSWORD_GRANT_TYPE)
-            .token(accessToken, (metadata) -> metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, tokenMetadata))
+            .principalName(userDetails.getUsername()) // principal_name
+            .authorizationGrantType(PASSWORD_GRANT_TYPE) // authorization_grant_type
+            .authorizedScopes(passwordGrantAuthenticationToken.getScopes()) // authorized_scopes
+            .attribute(OAuth2AuthorizationRequest.class.getName(), authorizationRequest) // attributes
+            //            .attribute(Principal.class.getName(), principal)
+            .token(accessToken, (metadata) -> metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, tokenMetadata)) //access_token_metadata
             .build();
 
         log.info("Gerando refresh token");
@@ -146,6 +155,9 @@ public class OAuth2PasswordGrantAuthenticationProvider implements Authentication
 
         log.info("Refresh token gerado com sucesso...");
 
+
+
+
         authorization = authorizationBuilder.build();
 //      authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, accessToken); // não é necessário na geração do token JWT
 
@@ -158,5 +170,32 @@ public class OAuth2PasswordGrantAuthenticationProvider implements Authentication
     @Override
     public boolean supports(Class<?> authentication) {
         return OAuth2PasswordGrantAuthenticationTokenModel.class.isAssignableFrom(authentication);
+    }
+
+
+    private OAuth2AuthorizationRequest createOAuth2AuthorizationRequestWithGrantTypePassword(OAuth2PasswordGrantAuthenticationTokenModel passwordGrantAuthenticationToken){
+        OAuth2AuthorizationRequest authorizationRequest = OAuth2AuthorizationRequest.authorizationCode()
+            .scopes(passwordGrantAuthenticationToken.getScopes())
+            .authorizationUri(AUTHORIZATION_URI)
+            .clientId(passwordGrantAuthenticationToken.getClientId())
+            .attributes(add -> add.putAll(Map.of("username", passwordGrantAuthenticationToken.getUsername())))
+            .additionalParameters(add -> add.putAll(Map.of("username", passwordGrantAuthenticationToken.getUsername())))
+            .build();
+
+        Class<?> aClass = authorizationRequest.getClass();
+
+        try {
+            Field authorizationGrantType = aClass.getDeclaredField("authorizationGrantType");
+            authorizationGrantType.setAccessible(true);
+            authorizationGrantType.set(authorizationRequest, new AuthorizationGrantType("password"));
+
+            Field responseType = aClass.getDeclaredField("responseType");
+            responseType.setAccessible(true);
+            responseType.set(authorizationRequest, new OAuth2AuthorizationResponseType("password"));
+
+            return authorizationRequest;
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
