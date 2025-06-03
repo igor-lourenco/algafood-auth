@@ -33,6 +33,7 @@ public class OAuth2PasswordGrantAuthenticationTokenModel extends OAuth2Authoriza
         this.username = username;
         this.clientId = clientPrincipal.getName();
         this.scopes = scopes;
+        this.setAuthenticated(true);
     }
 
 
@@ -44,5 +45,6 @@ public class OAuth2PasswordGrantAuthenticationTokenModel extends OAuth2Authoriza
         this.clientId = clientPrincipal.getName();
         this.scopes = scopes;
         this.authorities.addAll(authorities);
+        this.setAuthenticated(true);
     }
 }

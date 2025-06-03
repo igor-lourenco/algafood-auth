@@ -26,6 +26,7 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 
 import java.lang.reflect.Field;
+import java.security.Principal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -126,14 +127,18 @@ public class OAuth2PasswordGrantAuthenticationProvider implements Authentication
             tokenMetadata.put("scopes", authorizedScopes);
         }
 
+
+        // Criando Authentication para ser salvo no banco de dados sem as credentials do cliente e usuário
         OAuth2AuthorizationRequest authorizationRequest = createOAuth2AuthorizationRequestWithGrantTypePassword(passwordGrantAuthenticationToken);
+        OAuth2ClientAuthenticationToken clientAuthenticated = createOAuth2ClientAuthenticationToken(clientPrincipal);
+        Authentication principal = createOAuth2PasswordGrantAuthenticationTokenModel(passwordGrantAuthenticationToken, clientAuthenticated, userDetails);
 
         OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(registeredClient)
             .principalName(userDetails.getUsername()) // principal_name
             .authorizationGrantType(PASSWORD_GRANT_TYPE) // authorization_grant_type
             .authorizedScopes(passwordGrantAuthenticationToken.getScopes()) // authorized_scopes
             .attribute(OAuth2AuthorizationRequest.class.getName(), authorizationRequest) // attributes
-            //            .attribute(Principal.class.getName(), principal)
+            .attribute(Principal.class.getName(), principal) // attributes
             .token(accessToken, (metadata) -> metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, tokenMetadata)) //access_token_metadata
             .build();
 
@@ -167,6 +172,8 @@ public class OAuth2PasswordGrantAuthenticationProvider implements Authentication
         return new OAuth2AccessTokenAuthenticationToken(registeredClient, clientPrincipal, accessToken, refreshToken);
     }
 
+
+
     @Override
     public boolean supports(Class<?> authentication) {
         return OAuth2PasswordGrantAuthenticationTokenModel.class.isAssignableFrom(authentication);
@@ -197,5 +204,27 @@ public class OAuth2PasswordGrantAuthenticationProvider implements Authentication
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
+    }
+
+
+    private Authentication createOAuth2PasswordGrantAuthenticationTokenModel(OAuth2PasswordGrantAuthenticationTokenModel passwordGrantAuthenticationToken
+        , OAuth2ClientAuthenticationToken clientAuthenticated, UserDetails userDetails) {
+
+        return new OAuth2PasswordGrantAuthenticationTokenModel(
+            passwordGrantAuthenticationToken.getUsername(),
+            "",
+            clientAuthenticated,
+            passwordGrantAuthenticationToken.getScopes(),
+            userDetails.getAuthorities()
+        );
+
+    }
+
+
+    private OAuth2ClientAuthenticationToken createOAuth2ClientAuthenticationToken(OAuth2ClientAuthenticationToken clientPrincipal) {
+        return new OAuth2ClientAuthenticationToken(
+            clientPrincipal.getRegisteredClient(),
+            clientPrincipal.getClientAuthenticationMethod(),
+            null);
     }
 }
