@@ -120,13 +120,17 @@ public class OAuth2PasswordGrantAuthenticationProvider implements Authentication
             generatedAccessToken.getExpiresAt(), tokenContext.getAuthorizedScopes());
 
         log.info("Preparando os metadados que serão associados ao Authorization e salvar no banco de dados...");
-        Map<String, Object> tokenMetadata = new HashMap<>();
-        tokenMetadata.put("username", userDetails.getUsername());
-        tokenMetadata.put("roles", userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toSet()));
-        if (CollectionUtils.isNotEmpty(authorizedScopes)) {
-            tokenMetadata.put("scopes", authorizedScopes);
+        Map<String, Object> tokenMetadata;
+        if (generatedAccessToken instanceof ClaimAccessor) {
+            tokenMetadata = ((ClaimAccessor) generatedAccessToken).getClaims();
+        } else {
+            tokenMetadata = new HashMap<>();
+            tokenMetadata.put("username", userDetails.getUsername());
+            tokenMetadata.put("authorities", userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toSet()));
+            if (CollectionUtils.isNotEmpty(authorizedScopes)) {
+                tokenMetadata.put("scopes", authorizedScopes);
+            }
         }
-
 
         // Criando Authentication para ser salvo no banco de dados sem as credentials do cliente e usuário
         OAuth2AuthorizationRequest authorizationRequest = createOAuth2AuthorizationRequestWithGrantTypePassword(passwordGrantAuthenticationToken);
@@ -141,6 +145,7 @@ public class OAuth2PasswordGrantAuthenticationProvider implements Authentication
             .attribute(Principal.class.getName(), principal) // attributes
             .token(accessToken, (metadata) -> metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, tokenMetadata)) //access_token_metadata
             .build();
+
 
         log.info("Gerando refresh token");
         OAuth2Authorization.Builder authorizationBuilder = OAuth2Authorization.from(authorization);
@@ -159,9 +164,6 @@ public class OAuth2PasswordGrantAuthenticationProvider implements Authentication
         }
 
         log.info("Refresh token gerado com sucesso...");
-
-
-
 
         authorization = authorizationBuilder.build();
 //      authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, accessToken); // não é necessário na geração do token JWT
