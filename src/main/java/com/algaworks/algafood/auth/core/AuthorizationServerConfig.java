@@ -1,8 +1,11 @@
 package com.algaworks.algafood.auth.core;
 
+import com.algaworks.algafood.auth.mixin.OAuth2PasswordGrantAuthenticationTokenMixin;
+import com.algaworks.algafood.auth.models.OAuth2PasswordGrantAuthenticationTokenModel;
 import com.algaworks.algafood.auth.properties.AlgafoodSecurityProperties;
 import com.algaworks.algafood.auth.services.JdbcOAuth2AuthorizationQueryService;
 import com.algaworks.algafood.auth.services.OAuth2AuthorizationQueryService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
@@ -69,7 +72,7 @@ public class AuthorizationServerConfig {
             tokenEndpoint
                 .accessTokenRequestConverter(converter) // Adicionando a nossa implementação do AuthenticationConverter (para ler a requisição);
                 .authenticationProvider(provider) // Adicionando a nossa implementação do AuthenticationProvider (para validar e emitir tokens).
-                .authenticationProvider(new OAuth2PasswordGrantRefreshTokenAuthenticationProvider(authorizationService, tokenGenerator))
+                .authenticationProvider(new OAuth2PasswordGrantRefreshTokenAuthenticationProvider(userDetailsService, authorizationService, tokenGenerator))
         );
 
 
@@ -138,11 +141,46 @@ public class AuthorizationServerConfig {
 
     }
 
-    @Bean
-    // Configura serviço de autorização OAuth2 baseado em JDBC para armazenar e gerenciar autorizações de clientes.
-    public OAuth2AuthorizationService oAuth2AuthorizationService(JdbcOperations jdbcOperations, RegisteredClientRepository registeredClientRepository) {
-        return new JdbcOAuth2AuthorizationService(jdbcOperations, registeredClientRepository); // sem usar a implementação customizada
+//    @Bean
+//    (configuração padrão) Configura serviço de autorização OAuth2 baseado em JDBC para armazenar e gerenciar autorizações de clientes.
+//    public OAuth2AuthorizationService oAuth2AuthorizationService(JdbcOperations jdbcOperations, RegisteredClientRepository registeredClientRepository) {
+//
+//        return new JdbcOAuth2AuthorizationService(jdbcOperations, registeredClientRepository); // sem usar a implementação customizada
+//    }
+
+
+    @Bean // Configura serviço de autorização OAuth2 baseado em JDBC para armazenar e gerenciar autorizações de
+    // clientes e adiciona as classes implementadas para o fluxo Password
+    public OAuth2AuthorizationService authorizationService(
+        JdbcOperations jdbcOperations,
+        RegisteredClientRepository registeredClientRepository,
+        ObjectMapper baseObjectMapper) {
+
+        // Clona o ObjectMapper base e adiciona o MixIn
+        ObjectMapper objectMapper = baseObjectMapper.copy();
+        objectMapper.addMixIn(OAuth2PasswordGrantAuthenticationTokenModel.class,OAuth2PasswordGrantAuthenticationTokenMixin.class);
+
+        // Cria o serviço de autorização com o construtor padrão
+        JdbcOAuth2AuthorizationService authorizationService =
+            new JdbcOAuth2AuthorizationService(jdbcOperations, registeredClientRepository);
+
+        // Configura o RowMapper personalizado
+        JdbcOAuth2AuthorizationService.OAuth2AuthorizationRowMapper rowMapper =
+            new JdbcOAuth2AuthorizationService.OAuth2AuthorizationRowMapper(registeredClientRepository);
+
+        rowMapper.setObjectMapper(objectMapper);
+        authorizationService.setAuthorizationRowMapper(rowMapper);
+
+        // Configura o ParametersMapper personalizado
+        JdbcOAuth2AuthorizationService.OAuth2AuthorizationParametersMapper parametersMapper =
+            new JdbcOAuth2AuthorizationService.OAuth2AuthorizationParametersMapper();
+
+        parametersMapper.setObjectMapper(objectMapper);
+        authorizationService.setAuthorizationParametersMapper(parametersMapper);
+
+        return authorizationService;
     }
+
 
     private static RegisteredClient clienteClientCredentialsUsandoTokenOpaco(PasswordEncoder passwordEncoder) {
         return RegisteredClient
@@ -258,6 +296,7 @@ public class AuthorizationServerConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+
 }
 
 

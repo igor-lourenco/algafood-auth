@@ -94,12 +94,14 @@ public class OAuth2PasswordGrantAuthenticationProvider implements Authentication
         }
 
         log.info("Adicionando as lista de Authorities");
-        passwordGrantAuthenticationToken.getAuthorities().addAll(userDetails.getAuthorities());
+        // Criando Authentication para ser salvo no banco de dados sem as credentials do cliente e usuário
+        OAuth2ClientAuthenticationToken clientAuthenticated = createOAuth2ClientAuthenticationToken(clientPrincipal);
+        Authentication principal = createOAuth2PasswordGrantAuthenticationTokenModel(passwordGrantAuthenticationToken, clientAuthenticated, userDetails);
 
         log.info("Gerando token de acesso");
         DefaultOAuth2TokenContext.Builder tokenContextBuilder = DefaultOAuth2TokenContext.builder()
             .registeredClient(registeredClient)
-            .principal(passwordGrantAuthenticationToken)
+            .principal(principal)
             .authorizationServerContext(AuthorizationServerContextHolder.getContext())
             .authorizedScopes(authorizedScopes)
             .tokenType(OAuth2TokenType.ACCESS_TOKEN)
@@ -132,10 +134,8 @@ public class OAuth2PasswordGrantAuthenticationProvider implements Authentication
             }
         }
 
-        // Criando Authentication para ser salvo no banco de dados sem as credentials do cliente e usuário
+        // Criando OAuth2AuthorizationRequest para ser salvo no banco de dados sem as credentials do cliente e usuário
         OAuth2AuthorizationRequest authorizationRequest = createOAuth2AuthorizationRequestWithGrantTypePassword(passwordGrantAuthenticationToken);
-        OAuth2ClientAuthenticationToken clientAuthenticated = createOAuth2ClientAuthenticationToken(clientPrincipal);
-        Authentication principal = createOAuth2PasswordGrantAuthenticationTokenModel(passwordGrantAuthenticationToken, clientAuthenticated, userDetails);
 
         OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(registeredClient)
             .principalName(userDetails.getUsername()) // principal_name
@@ -196,7 +196,7 @@ public class OAuth2PasswordGrantAuthenticationProvider implements Authentication
         try {
             Field authorizationGrantType = aClass.getDeclaredField("authorizationGrantType");
             authorizationGrantType.setAccessible(true);
-            authorizationGrantType.set(authorizationRequest, new AuthorizationGrantType("password"));
+            authorizationGrantType.set(authorizationRequest, AuthorizationGrantType.PASSWORD);
 
             Field responseType = aClass.getDeclaredField("responseType");
             responseType.setAccessible(true);
