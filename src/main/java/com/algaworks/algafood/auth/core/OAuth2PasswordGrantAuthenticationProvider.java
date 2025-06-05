@@ -2,6 +2,7 @@ package com.algaworks.algafood.auth.core;
 
 
 import com.algaworks.algafood.auth.models.OAuth2PasswordGrantAuthenticationTokenModel;
+import com.algaworks.algafood.auth.utils.OAuth2AuthenticationProviderUtils;
 import com.nimbusds.oauth2.sdk.util.CollectionUtils;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -30,7 +31,8 @@ import java.security.Principal;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.algaworks.algafood.auth.core.OAuth2EndpointUtils.ACCESS_TOKEN_REQUEST_ERROR_URI;
+import static com.algaworks.algafood.auth.utils.OAuth2EndpointUtils.ACCESS_TOKEN_REQUEST_ERROR_URI;
+import static com.algaworks.algafood.auth.core.OAuth2PasswordGrantAuthenticationConverter.PASSWORD_GRANT_TYPE;
 
 
 /** Implementação do OAuth 2.0 para o fluxo: Resource Owner Password Credentials Grant. */
@@ -92,10 +94,8 @@ public class OAuth2PasswordGrantAuthenticationProvider implements Authentication
             throw new OAuth2AuthenticationException("Invalid resource owner credentials");
         }
 
-        log.info("Adicionando as lista de Authorities");
-        // Criando Authentication para ser salvo no banco de dados sem as credentials do cliente e usuário
-        OAuth2ClientAuthenticationToken clientAuthenticated = createOAuth2ClientAuthenticationToken(clientPrincipal);
-        Authentication principal = createOAuth2PasswordGrantAuthenticationTokenModel(passwordGrantAuthenticationToken, clientAuthenticated, userDetails);
+        log.info("Adicionando as lista de Authorities e criando Authentication para ser salvo no banco de dados sem as credentials do cliente e usuário");
+        Authentication principal = createOAuth2PasswordGrantAuthenticationTokenModel(passwordGrantAuthenticationToken, clientPrincipal, userDetails);
 
         log.info("Gerando token de acesso");
         DefaultOAuth2TokenContext.Builder tokenContextBuilder = DefaultOAuth2TokenContext.builder()
@@ -104,7 +104,7 @@ public class OAuth2PasswordGrantAuthenticationProvider implements Authentication
             .authorizationServerContext(AuthorizationServerContextHolder.getContext())
             .authorizedScopes(authorizedScopes)
             .tokenType(OAuth2TokenType.ACCESS_TOKEN)
-            .authorizationGrantType(AuthorizationGrantType.PASSWORD);
+            .authorizationGrantType(PASSWORD_GRANT_TYPE);
 
         OAuth2TokenContext tokenContext =((DefaultOAuth2TokenContext.Builder) tokenContextBuilder.tokenType(OAuth2TokenType.ACCESS_TOKEN)).build();
 
@@ -133,12 +133,12 @@ public class OAuth2PasswordGrantAuthenticationProvider implements Authentication
             }
         }
 
-        // Criando OAuth2AuthorizationRequest para ser salvo no banco de dados sem as credentials do cliente e usuário
+        // Criando OAuth2AuthorizationRequest para ser salvo no banco de dados
         OAuth2AuthorizationRequest authorizationRequest = createOAuth2AuthorizationRequestWithGrantTypePassword(passwordGrantAuthenticationToken);
 
         OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(registeredClient)
             .principalName(userDetails.getUsername()) // principal_name
-            .authorizationGrantType(AuthorizationGrantType.PASSWORD) // authorization_grant_type
+            .authorizationGrantType(PASSWORD_GRANT_TYPE) // authorization_grant_type
             .authorizedScopes(passwordGrantAuthenticationToken.getScopes()) // authorized_scopes
             .attribute(OAuth2AuthorizationRequest.class.getName(), authorizationRequest) // attributes
             .attribute(Principal.class.getName(), principal) // attributes
@@ -171,13 +171,6 @@ public class OAuth2PasswordGrantAuthenticationProvider implements Authentication
         this.authorizationService.save(authorization);
 
         return new OAuth2AccessTokenAuthenticationToken(registeredClient, clientPrincipal, accessToken, refreshToken);
-    }
-
-
-
-    @Override
-    public boolean supports(Class<?> authentication) {
-        return OAuth2PasswordGrantAuthenticationTokenModel.class.isAssignableFrom(authentication);
     }
 
 
@@ -223,11 +216,9 @@ public class OAuth2PasswordGrantAuthenticationProvider implements Authentication
 
     }
 
-
-    private OAuth2ClientAuthenticationToken createOAuth2ClientAuthenticationToken(OAuth2ClientAuthenticationToken clientPrincipal) {
-        return new OAuth2ClientAuthenticationToken(
-            clientPrincipal.getRegisteredClient(),
-            clientPrincipal.getClientAuthenticationMethod(),
-            null);
+    @Override
+    public boolean supports(Class<?> authentication) {
+        return OAuth2PasswordGrantAuthenticationTokenModel.class.isAssignableFrom(authentication);
     }
+
 }

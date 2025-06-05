@@ -5,6 +5,7 @@ import com.algaworks.algafood.auth.models.OAuth2PasswordGrantAuthenticationToken
 import com.algaworks.algafood.auth.properties.AlgafoodSecurityProperties;
 import com.algaworks.algafood.auth.services.JdbcOAuth2AuthorizationQueryService;
 import com.algaworks.algafood.auth.services.OAuth2AuthorizationQueryService;
+import com.algaworks.algafood.auth.utils.OAuth2ConfigurerUtils;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
@@ -76,7 +77,7 @@ public class AuthorizationServerConfig {
             tokenEndpoint
                 .accessTokenRequestConverter(converter) // Adicionando a nossa implementação do AuthenticationConverter (para ler a requisição);
                 .authenticationProvider(provider) // Adicionando a nossa implementação do AuthenticationProvider (para validar e emitir tokens).
-                .authenticationProvider(new OAuth2PasswordGrantRefreshTokenAuthenticationProvider(userDetailsService, authorizationService, tokenGenerator))
+                .authenticationProvider(new OAuth2PasswordGrantRefreshTokenAuthenticationProvider(authorizationService, tokenGenerator))
         );
 
 

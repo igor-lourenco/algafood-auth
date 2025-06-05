@@ -1,4 +1,4 @@
-package com.algaworks.algafood.auth.core;
+package com.algaworks.algafood.auth.utils;
 
 
 import com.nimbusds.jose.jwk.source.JWKSource;

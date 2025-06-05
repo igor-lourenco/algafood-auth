@@ -1,6 +1,7 @@
 package com.algaworks.algafood.auth.core;
 
 import com.algaworks.algafood.auth.models.OAuth2PasswordGrantAuthenticationTokenModel;
+import com.algaworks.algafood.auth.utils.OAuth2EndpointUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
