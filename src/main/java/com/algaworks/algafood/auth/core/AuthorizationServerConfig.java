@@ -5,6 +5,7 @@ import com.algaworks.algafood.auth.models.OAuth2PasswordGrantAuthenticationToken
 import com.algaworks.algafood.auth.properties.AlgafoodSecurityProperties;
 import com.algaworks.algafood.auth.services.JdbcOAuth2AuthorizationQueryService;
 import com.algaworks.algafood.auth.services.OAuth2AuthorizationQueryService;
+import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,6 +17,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.jackson2.SecurityJackson2Modules;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationConsentService;
@@ -26,6 +28,7 @@ import org.springframework.security.oauth2.server.authorization.client.JdbcRegis
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
+import org.springframework.security.oauth2.server.authorization.jackson2.OAuth2AuthorizationServerJackson2Module;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
@@ -36,6 +39,7 @@ import org.springframework.security.web.authentication.LoginUrlAuthenticationEnt
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
 import java.time.Duration;
+import java.util.List;
 
 /**
  * Essa classe é responsável por configurar o servidor de autorização OAuth2, de como os clientes se autenticam e
@@ -149,34 +153,33 @@ public class AuthorizationServerConfig {
 //    }
 
 
-    @Bean // Configura serviço de autorização OAuth2 baseado em JDBC para armazenar e gerenciar autorizações de
-    // clientes e adiciona as classes implementadas para o fluxo Password
-    public OAuth2AuthorizationService authorizationService(
-        JdbcOperations jdbcOperations,
-        RegisteredClientRepository registeredClientRepository,
-        ObjectMapper baseObjectMapper) {
-
-        // Clona o ObjectMapper base e adiciona o MixIn
-        ObjectMapper objectMapper = baseObjectMapper.copy();
-        objectMapper.addMixIn(OAuth2PasswordGrantAuthenticationTokenModel.class,OAuth2PasswordGrantAuthenticationTokenMixin.class);
-
-        // Cria o serviço de autorização com o construtor padrão
+//  Configura serviço de autorização OAuth2 baseado em JDBC para armazenar e gerenciar autorizações de clientes
+//  e também dá suporte para o fluxo Password grant implementado na aplicação.
+    @Bean
+    public OAuth2AuthorizationService authorizationService(JdbcOperations jdbcTemplate,
+                                                           RegisteredClientRepository registeredClientRepository) {
         JdbcOAuth2AuthorizationService authorizationService =
-            new JdbcOAuth2AuthorizationService(jdbcOperations, registeredClientRepository);
+            new JdbcOAuth2AuthorizationService(jdbcTemplate, registeredClientRepository);
 
-        // Configura o RowMapper personalizado
         JdbcOAuth2AuthorizationService.OAuth2AuthorizationRowMapper rowMapper =
             new JdbcOAuth2AuthorizationService.OAuth2AuthorizationRowMapper(registeredClientRepository);
 
-        rowMapper.setObjectMapper(objectMapper);
-        authorizationService.setAuthorizationRowMapper(rowMapper);
-
-        // Configura o ParametersMapper personalizado
-        JdbcOAuth2AuthorizationService.OAuth2AuthorizationParametersMapper parametersMapper =
+        JdbcOAuth2AuthorizationService.OAuth2AuthorizationParametersMapper oAuth2AuthorizationParametersMapper =
             new JdbcOAuth2AuthorizationService.OAuth2AuthorizationParametersMapper();
 
-        parametersMapper.setObjectMapper(objectMapper);
-        authorizationService.setAuthorizationParametersMapper(parametersMapper);
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        ClassLoader classLoader = JdbcOAuth2AuthorizationService.class.getClassLoader();
+        List<Module> securityModules = SecurityJackson2Modules.getModules(classLoader);
+        objectMapper.registerModules(securityModules);
+        objectMapper.registerModule(new OAuth2AuthorizationServerJackson2Module());
+        objectMapper.addMixIn(OAuth2PasswordGrantAuthenticationTokenModel.class, OAuth2PasswordGrantAuthenticationTokenMixin.class);
+
+        rowMapper.setObjectMapper(objectMapper);
+        oAuth2AuthorizationParametersMapper.setObjectMapper(objectMapper);
+
+        authorizationService.setAuthorizationRowMapper(rowMapper);
+        authorizationService.setAuthorizationParametersMapper(oAuth2AuthorizationParametersMapper);
 
         return authorizationService;
     }

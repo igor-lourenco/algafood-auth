@@ -31,7 +31,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.algaworks.algafood.auth.core.OAuth2EndpointUtils.ACCESS_TOKEN_REQUEST_ERROR_URI;
-import static com.algaworks.algafood.auth.core.OAuth2PasswordGrantAuthenticationConverter.PASSWORD_GRANT_TYPE;
 
 
 /** Implementação do OAuth 2.0 para o fluxo: Resource Owner Password Credentials Grant. */
@@ -105,7 +104,7 @@ public class OAuth2PasswordGrantAuthenticationProvider implements Authentication
             .authorizationServerContext(AuthorizationServerContextHolder.getContext())
             .authorizedScopes(authorizedScopes)
             .tokenType(OAuth2TokenType.ACCESS_TOKEN)
-            .authorizationGrantType(PASSWORD_GRANT_TYPE);
+            .authorizationGrantType(AuthorizationGrantType.PASSWORD);
 
         OAuth2TokenContext tokenContext =((DefaultOAuth2TokenContext.Builder) tokenContextBuilder.tokenType(OAuth2TokenType.ACCESS_TOKEN)).build();
 
@@ -139,7 +138,7 @@ public class OAuth2PasswordGrantAuthenticationProvider implements Authentication
 
         OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(registeredClient)
             .principalName(userDetails.getUsername()) // principal_name
-            .authorizationGrantType(PASSWORD_GRANT_TYPE) // authorization_grant_type
+            .authorizationGrantType(AuthorizationGrantType.PASSWORD) // authorization_grant_type
             .authorizedScopes(passwordGrantAuthenticationToken.getScopes()) // authorized_scopes
             .attribute(OAuth2AuthorizationRequest.class.getName(), authorizationRequest) // attributes
             .attribute(Principal.class.getName(), principal) // attributes
@@ -196,11 +195,13 @@ public class OAuth2PasswordGrantAuthenticationProvider implements Authentication
         try {
             Field authorizationGrantType = aClass.getDeclaredField("authorizationGrantType");
             authorizationGrantType.setAccessible(true);
-            authorizationGrantType.set(authorizationRequest, AuthorizationGrantType.PASSWORD);
+
+//          se colocar PASSWORD dá exception pelo próprio Spring Authorization Server quando tenta recuperar o authorization posteriormente
+            authorizationGrantType.set(authorizationRequest, AuthorizationGrantType.AUTHORIZATION_CODE);
 
             Field responseType = aClass.getDeclaredField("responseType");
             responseType.setAccessible(true);
-            responseType.set(authorizationRequest, new OAuth2AuthorizationResponseType("password"));
+            responseType.set(authorizationRequest, new OAuth2AuthorizationResponseType("code"));
 
             return authorizationRequest;
         } catch (NoSuchFieldException | IllegalAccessException e) {

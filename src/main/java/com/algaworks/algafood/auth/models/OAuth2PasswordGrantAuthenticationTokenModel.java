@@ -50,5 +50,4 @@ public class OAuth2PasswordGrantAuthenticationTokenModel extends OAuth2Authoriza
         this.authorities = Collections.unmodifiableList(new ArrayList(authorities));
         this.setAuthenticated(true);
     }
-
 }
