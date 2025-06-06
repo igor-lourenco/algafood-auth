@@ -15,6 +15,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -72,14 +73,16 @@ public class AuthorizationServerConfig {
 //      Esse provider é a nossa implementação customizada para autenticar o usuário e o cliente, gerar os tokens (access, refresh) e salvar a autorização no banco de dados
         var provider = new OAuth2PasswordGrantAuthenticationProvider(userDetailsService, passwordEncoder, authorizationService, tokenGenerator);
 
+//      Esse provider é a nossa implementação customizada para autenticar o usuário e o cliente a partir do refresh token, gerar novos token(access, refresh) e salvar a autorização no banco de dados
+        var refreshTokenProvider = new OAuth2PasswordGrantRefreshTokenAuthenticationProvider(authorizationService, tokenGenerator);
+
 //      Adicionando o suporte ao fluxo de senha (password grant) no Authorization Server do Spring Security de forma customizada
         authorizationServerConfigurer.tokenEndpoint(tokenEndpoint ->
             tokenEndpoint
                 .accessTokenRequestConverter(converter) // Adicionando a nossa implementação do AuthenticationConverter (para ler a requisição);
                 .authenticationProvider(provider) // Adicionando a nossa implementação do AuthenticationProvider (para validar e emitir tokens).
-                .authenticationProvider(new OAuth2PasswordGrantRefreshTokenAuthenticationProvider(authorizationService, tokenGenerator))
+                .authenticationProvider(refreshTokenProvider)// Adicionando a nossa implementação do AuthenticationProvider (para emitir tokens a partir do refresh token).
         );
-
 
         RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
 
@@ -104,7 +107,8 @@ public class AuthorizationServerConfig {
     public SecurityFilterChain defaultFilterChain(HttpSecurity http) throws Exception {
 
         http.formLogin(Customizer.withDefaults())
-            .csrf().disable().cors(); // Desativa proteção contra CSRF (Cross-Site Request Forgery) porque o ataque de CSRF geralmente depende de um navegador do usuário e de cookies de autenticação
+            .csrf(AbstractHttpConfigurer::disable)
+            .cors(AbstractHttpConfigurer::disable); // Desativa proteção contra CSRF (Cross-Site Request Forgery) porque o ataque de CSRF geralmente depende de um navegador do usuário e de cookies de autenticação
 
         return http.formLogin(customizer -> customizer.loginPage("/login")).build();
     }

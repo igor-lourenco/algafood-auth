@@ -8,10 +8,7 @@ import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationGrantAuthenticationToken;
 
 import java.io.Serial;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
+import java.util.*;
 
 import static com.algaworks.algafood.auth.core.OAuth2PasswordGrantAuthenticationConverter.PASSWORD_GRANT_TYPE;
 
@@ -34,7 +31,7 @@ public class OAuth2PasswordGrantAuthenticationTokenModel extends OAuth2Authoriza
         this.password = password;
         this.username = username;
         this.clientId = clientPrincipal.getName();
-        this.scopes = scopes;
+        this.scopes = Collections.unmodifiableSet((Set)(scopes != null ? new HashSet(scopes) : Collections.emptySet()));
         this.authorities = AuthorityUtils.NO_AUTHORITIES;
         this.setAuthenticated(true);
     }
@@ -46,7 +43,7 @@ public class OAuth2PasswordGrantAuthenticationTokenModel extends OAuth2Authoriza
         this.username = username;
         this.password = password;
         this.clientId = clientPrincipal.getName();
-        this.scopes = scopes;
+        this.scopes = Collections.unmodifiableSet((Set)(scopes != null ? new HashSet(scopes) : Collections.emptySet()));
         this.authorities = Collections.unmodifiableList(new ArrayList(authorities));
         this.setAuthenticated(true);
     }

@@ -56,8 +56,6 @@ public class OAuth2PasswordGrantRefreshTokenAuthenticationProvider implements Au
 
         if (!authorization.getAuthorizationGrantType().equals(PASSWORD_GRANT_TYPE)) {
             log.error("Authorization Grant Type não é do tipo PASSWORD_GRANT_TYPE: {}", authorization.getAuthorizationGrantType().getValue());
-
-//            return new OAuth2RefreshTokenAuthenticationProvider(authorizationService, tokenGenerator).authenticate(authentication);
             throw new OAuth2AuthenticationException("invalid_grant");
         }
 
